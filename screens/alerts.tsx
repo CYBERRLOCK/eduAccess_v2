@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
 import supabase from '../supabase'; // Import Supabase client
+import { useNavigation } from "@react-navigation/native";
+import { useTheme } from "../components/theme-provider";
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const Alerts: React.FC = () => {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigation = useNavigation();
+  const { theme } = useTheme();
 
   useEffect(() => {
     fetchAlerts();
@@ -27,19 +32,41 @@ const Alerts: React.FC = () => {
   };
 
   const renderItem = ({ item }: { item: any }) => (
-    <View style={styles.alertItem}>
-      <Text style={styles.alertTitle}>{item.title}</Text>
-      <Text style={styles.alertContent}>{item.content}</Text>
+    <View style={[styles.alertItem, { backgroundColor: theme.cardColor, shadowColor: theme.shadowColor }]}>
+      <Text style={[styles.alertTitle, { color: theme.textPrimary }]}>{item.title}</Text>
+      <Text style={[styles.alertContent, { color: theme.textSecondary }]}>{item.content}</Text>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>University Alerts</Text>
+    <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: theme.backgroundColor, borderBottomColor: theme.borderColor }]}>
+        <View style={styles.headerContent}>
+          <TouchableOpacity 
+            style={[styles.backButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]}
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="arrow-left" size={20} color={theme.textPrimary} />
+          </TouchableOpacity>
+          <View style={styles.titleContainer}>
+            <Text style={[styles.title, { color: theme.textPrimary }]}>University Alerts</Text>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Stay updated with announcements</Text>
+          </View>
+          <View style={styles.placeholder} />
+        </View>
+      </View>
+
+      {/* Content */}
       {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.accentPrimary} />
+          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading alerts...</Text>
+        </View>
       ) : error ? (
-        <Text style={styles.errorText}>{error}</Text>
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorText, { color: theme.error }]}>{error}</Text>
+        </View>
       ) : (
         <FlatList
           data={alerts}
@@ -56,36 +83,106 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8f1e4",
-    padding: 20,
   },
   header: {
-    fontSize: 24,
+    height: 120,
+    backgroundColor: "#f8f1e4",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e8d5b5",
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  headerContent: {
+    flex: 1,
+    paddingTop: 40,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  titleContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 20,
+    color: "#2c2c2c",
+    lineHeight: 28,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#666",
+    marginTop: 4,
+    lineHeight: 20,
+  },
+  placeholder: {
+    width: 44,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#666",
+    lineHeight: 20,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
   },
   listContainer: {
-    paddingBottom: 20,
+    padding: 24,
+    paddingBottom: 40,
   },
   alertItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    marginBottom: 10,
+    padding: 20,
+    backgroundColor: "#f3e2c7",
+    borderRadius: 12,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   alertTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 5,
+    marginBottom: 8,
+    color: "#2c2c2c",
   },
   alertContent: {
     fontSize: 16,
-    color: "#000",
+    color: "#666",
+    lineHeight: 22,
   },
   errorText: {
     fontSize: 16,
     color: "red",
+    textAlign: 'center',
   },
 });
 

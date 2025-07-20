@@ -1,312 +1,180 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, Image, ActivityIndicator, RefreshControl } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import Icon from 'react-native-vector-icons/FontAwesome'; // Import FontAwesome icons
-import { StackNavigationProp } from '@react-navigation/stack'; // Import StackNavigationProp
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
-import supabase from '../supabase'; // Import Supabase client
-import type { Contact } from "../types"; // Ensure you have a Contact type defined in your types file
-// Add at the top with other imports
-import { useFocusEffect } from "@react-navigation/native";
-import { BackHandler } from "react-native";
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  ScrollView, 
+  Image, 
+  Dimensions,
+  StatusBar,
+  BackHandler,
+  Alert
+} from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../App';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
-type RootStackParamList = {
-  ContactDetails: { contacts: Contact[], department: string };
-  SettingsPage: undefined; // Add SettingsPage to the RootStackParamList
-  NotificationScreen: undefined; // Add NotificationScreen to the RootStackParamList
-};
 
-const CACHE_KEY_CONTACTS = 'faculty_contacts_cache';
-const CACHE_EXPIRY_KEY_CONTACTS = 'faculty_contacts_cache_expiry';
-const CACHE_EXPIRY_TIME = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const { width, height } = Dimensions.get('window');
 
-const departments = [
-  "Artificial Intelligence & Data Science",
-  "Civil Engineering",
-  "Computer Science & Engineering",
-  "Computer Science & Engineering (Cyber Security)",
-  "Computer Science & Engineering (Artificial Intelligence)",
-  "Electronics & Communication Engineering",
-  "Electronics & Computer Engineering",
-  "Electrical & Electronics Engineering",
-  "Mechanical Engineering",
-  "Computer Applications",
-  "Masters in Business Administration",
-  "Science & Humanities Department",
-];
+type HomePageNavigationProp = StackNavigationProp<RootStackParamList, 'HomePage'>;
 
-const divisions = [
-  "Research",
-  "Office & Administration",
-  "Library & Information",
-  "Physical Education",
-  "Placements",
-  "Software Development Center",
-];
+const HomePage = () => {
+  const navigation = useNavigation<HomePageNavigationProp>();
+  const [selectedCard, setSelectedCard] = useState<number | null>(null);
 
-const logos: { [key: string]: string } = {
-  "Artificial Intelligence & Data Science": "ad",
-  "Civil Engineering": "ce",
-  "Computer Science & Engineering": "cse",
-  "Computer Science & Engineering (Cyber Security)": "cy",
-  "Computer Science & Engineering (Artificial Intelligence)": "ai",
-  "Electronics & Communication Engineering": "ece",
-  "Electronics & Computer Engineering": "es",
-  "Electrical & Electronics Engineering": "eee",
-  "Mechanical Engineering": "me",
-  "Computer Applications": "mca",
-  "Masters in Business Administration": "mba",
-  "Science & Humanities Department": "s&h",
-  "Research": "R",
-  "Office & Administration": "o&a",
-  "Library & Information": "Li",
-  "Physical Education": "pe",
-  "Placements": "pl",
-  "Software Development Center": "sdc",
-};
-
-const FacultyDirectory: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sampleContacts, setSampleContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-
-  // Handle back button press
+  // Handle back button press - ONLY when Home screen is focused
   useFocusEffect(
     React.useCallback(() => {
-      const onBackPress = () => {
-        BackHandler.exitApp();
-        return true;
+      const backAction = () => {
+        Alert.alert(
+          'Exit EduAccess',
+          'Do you want to exit EduAccess?',
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel',
+            },
+            {
+              text: 'Exit',
+              style: 'destructive',
+              onPress: () => BackHandler.exitApp(),
+            },
+          ],
+          { cancelable: true }
+        );
+        return true; // Prevent default back action
       };
-      const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
-      return () => subscription.remove();
+
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+      // Cleanup when screen loses focus
+      return () => {
+        backHandler.remove();
+      };
     }, [])
   );
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    const cachedContacts = await AsyncStorage.getItem(CACHE_KEY_CONTACTS);
-    const cacheExpiryContacts = await AsyncStorage.getItem(CACHE_EXPIRY_KEY_CONTACTS);
-    const isCacheValidContacts = cacheExpiryContacts && new Date().getTime() < parseInt(cacheExpiryContacts);
-
-    if (cachedContacts && isCacheValidContacts) {
-      setSampleContacts(JSON.parse(cachedContacts));
-    } else {
-      fetchContacts();
-    }
-
-    setLoading(false);
-  };
-
-  const fetchContacts = async () => {
-    const tables = [
-      'ad', 'ce', 'cse', 'csecy', 'cseai', 'ece', 'es', 'eee', 'me', 'mca', 'mba', 's&h', 'research', 'o&a', 'library', 'pe', 'placements', 'sdc'
-    ];
-    const allContacts: Contact[] = [];
-
-    for (const table of tables) {
-      const { data, error } = await supabase
-        .from(table)
-        .select('*');
-
-      if (error) {
-        console.error(`Error fetching data from ${table}:`, error);
-      } else {
-        allContacts.push(...data);
-      }
-    }
-
-    setSampleContacts(allContacts);
-    await AsyncStorage.setItem(CACHE_KEY_CONTACTS, JSON.stringify(allContacts));
-    await AsyncStorage.setItem(CACHE_EXPIRY_KEY_CONTACTS, (new Date().getTime() + CACHE_EXPIRY_TIME).toString());
-  };
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await AsyncStorage.removeItem(CACHE_KEY_CONTACTS);
-      await AsyncStorage.removeItem(CACHE_EXPIRY_KEY_CONTACTS);
-      await fetchContacts();
-    } catch (error) {
-      console.error('Error clearing cache:', error);
-    }
-    setRefreshing(false);
-  };
-
-  const combinedList = [
-    { type: 'header', name: 'Departments' },
-    ...departments.map(dept => ({ type: 'department', name: dept })),
-    { type: 'header', name: 'Division' },
-    ...divisions.map(div => ({ type: 'division', name: div })),
+  
+  const menuItems = [
+    { 
+      title: 'Faculty Directory', 
+      icon: 'users', 
+      screen: 'FacultyDirectory',
+      description: 'Browse faculty members and departments'
+    },
+    { 
+      title: 'Hall Booking', 
+      icon: 'calendar-check-o', 
+      screen: 'HallBooking',
+      description: 'Book halls and meeting rooms'
+    },
+    { 
+      title: 'Faculty Notice', 
+      icon: 'bullhorn', 
+      screen: 'FacultyNotice',
+      description: 'View important announcements'
+    },
+    { 
+      title: 'Exam Duty', 
+      icon: 'file-text-o', 
+      screen: 'ExamDuty',
+      description: 'Manage exam schedules and duties'
+    },
+    { 
+      title: 'Leave Request', 
+      icon: 'file-o', 
+      screen: 'LeaveRequest',
+      description: 'Submit and track leave requests'
+    },
   ];
 
-  const filteredList = searchQuery
-    ? [
-        ...departments
-          .filter(dept => dept.toLowerCase().includes(searchQuery.toLowerCase()))
-          .map(dept => ({ type: 'department', name: dept })),
-        ...divisions
-          .filter(div => div.toLowerCase().includes(searchQuery.toLowerCase()))
-          .map(div => ({ type: 'division', name: div })),
-        ...sampleContacts
-          .filter(contact => contact.name.toLowerCase().includes(searchQuery.toLowerCase()))
-          .map(contact => ({ type: 'contact', ...contact })),
-      ]
-    : combinedList;
 
-  const handlePress = async (item: any) => {
-    let tableName = '';
-    switch (item.name) {
-      case 'Artificial Intelligence & Data Science':
-        tableName = 'ad';
-        break;
-      case 'Civil Engineering':
-        tableName = 'ce';
-        break;
-      case 'Computer Science & Engineering':
-        tableName = 'cse';
-        break;
-      case 'Computer Science & Engineering (Cyber Security)':
-        tableName = 'csecy';
-        break;
-      case 'Computer Science & Engineering (Artificial Intelligence)':
-        tableName = 'cseai';
-        break;
-      case 'Electronics & Communication Engineering':
-        tableName = 'ece';
-        break;
-      case 'Electronics & Computer Engineering':
-        tableName = 'es';
-        break;
-      case 'Electrical & Electronics Engineering':
-        tableName = 'eee';
-        break;
-      case 'Mechanical Engineering':
-        tableName = 'me';
-        break;
-      case 'Computer Applications':
-        tableName = 'mca';
-        break;
-      case 'Masters in Business Administration':
-        tableName = 'mba';
-        break;
-      case 'Science & Humanities Department':
-        tableName = 's&h';
-        break;
-      case 'Research':
-        tableName = 'research';
-        break;
-      case 'Office & Administration':
-        tableName = 'o&a';
-        break;
-      case 'Library & Information':
-        tableName = 'library';
-        break;
-      case 'Physical Education':
-        tableName = 'pe';
-        break;
-      case 'Placements':
-        tableName = 'placements';
-        break;
-      case 'Software Development Center':
-        tableName = 'sdc';
-        break;
-      default:
-        break;
-    }
 
-    if (tableName) {
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('*');
 
-      if (error) {
-        console.error('Error fetching data:', error);
-      } else {
-        navigation.navigate("ContactDetails", { contacts: data, department: item.name });
-      }
-    } else if (item.type === 'department' || item.type === 'division') {
-      const contacts = sampleContacts.filter(contact => contact.department === item.name);
-      navigation.navigate("ContactDetails", { contacts, department: item.name });
-    } else if (item.type === 'contact') {
-      navigation.navigate("ContactDetails", { contacts: [item], department: item.department });
-    }
-  };
 
-  const renderItem = ({ item }: { item: any }) => {
-    if (item.type === 'header') {
-      return <Text style={styles.sectionHeader}>{item.name}</Text>;
-    }
-    if (item.type === 'contact') {
-      return (
-        <TouchableOpacity onPress={() => handlePress(item)}>
-          <View style={styles.contactItem}>
-            <Image source={{ uri: item.image_url }} style={styles.contactImage} />
-            <Text style={styles.contactText}>{item.name}</Text>
-          </View>
-        </TouchableOpacity>
-      );
-    }
-    return (
-      <TouchableOpacity onPress={() => handlePress(item)}>
-        <View style={styles.item}>
-          <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>{logos[item.name]}</Text>
-          </View>
-          <Text style={styles.itemText}>{item.name}</Text>
-        </View>
-      </TouchableOpacity>
-    );
+
+
+  const handleCardPress = (index: number, screen: string) => {
+    setSelectedCard(index);
+    navigation.navigate(screen as any);
+    setSelectedCard(null);
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.fixedHeader}>
+      <StatusBar barStyle="light-content" backgroundColor="#1a1a2e" />
+      
+      {/* Header */}
+      <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Image source={{ uri: 'https://i.postimg.cc/JsRJXTkP/Main-Logo.png' }} style={styles.logo} />
-          <Text style={styles.title}>EduAccess</Text>
+          <View>
+            <Image 
+              source={{ uri: 'https://i.postimg.cc/JsRJXTkP/Main-Logo.png' }} 
+              style={styles.logo} 
+            />
+          </View>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>EduAccess</Text>
+            <Text style={styles.subtitle}>Faculty Management System</Text>
+          </View>
           <View style={styles.iconContainer}>
-            <TouchableOpacity onPress={() => navigation.navigate("NotificationScreen")}>
-              <Icon name="bell" size={24} color="#000" style={styles.icon} />
+            <TouchableOpacity 
+              style={styles.iconButton}
+              onPress={() => navigation.navigate("NotificationScreen")}
+            >
+              <Icon name="bell" size={20} color="#000" />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate("SettingsPage")}>
-              <Icon name="cog" size={24} color="#000" style={styles.icon} />
+            <TouchableOpacity 
+              style={styles.iconButton}
+              onPress={() => navigation.navigate("SettingsPage")}
+            >
+              <Icon name="cog" size={20} color="#000" />
             </TouchableOpacity>
           </View>
         </View>
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Search departments, contacts, or announcements..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery ? (
-            <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearIcon}>
-              <Icon name="times-circle" size={20} color="#000" />
-            </TouchableOpacity>
-          ) : null}
-        </View>
-        <Text style={styles.mainTitle}>Home</Text>
       </View>
-      {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
-      ) : (
-        <FlatList
-          data={filteredList}
-          keyExtractor={(item: any) => 'id' in item ? item.id.toString() : item.name}
-          renderItem={renderItem}
-          contentContainerStyle={styles.scrollContainer}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        />
-      )}
+
+      {/* Content */}
+      <ScrollView 
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <Text style={styles.welcomeText}>Welcome back!</Text>
+        <Text style={styles.descriptionText}>
+          Choose a service to get started
+        </Text>
+
+        <View style={styles.grid}>
+          {menuItems.map((item, index) => (
+            <View
+              key={index}
+              style={styles.cardContainer}
+            >
+              <TouchableOpacity
+                style={styles.card}
+                onPress={() => handleCardPress(index, item.screen)}
+                activeOpacity={0.9}
+              >
+                <View style={styles.cardContent}>
+                  <View style={styles.iconContainer}>
+                    <Icon name={item.icon} size={32} color="#000" />
+                  </View>
+                  <Text style={styles.cardTitle}>{item.title}</Text>
+                  <Text style={styles.cardDescription}>{item.description}</Text>
+                  
+                  {/* Arrow */}
+                  <View style={styles.arrowContainer}>
+                    <Icon name="arrow-right" size={16} color="#000" />
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 };
@@ -316,129 +184,128 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f8f1e4",
   },
-  fixedHeader: {
+  header: {
+    height: 120,
     backgroundColor: "#f8f1e4",
-    paddingVertical: 40, // Increased padding for more space
-    paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#f8f1e4",
+    borderBottomColor: "#e8d5b5",
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   headerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between", // Space between elements
-    marginBottom: 10, // Adjusted margin for more space
+    flex: 1,
+    paddingTop: 40,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   logo: {
-    width: 50,
-    height: 50,
-    marginRight: 10,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+  },
+  titleContainer: {
+    flex: 1,
+    marginLeft: 16,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "bold",
-    textAlign: "justify",
-    flex: 1, // Center the title
+    color: "#2c2c2c",
+    lineHeight: 28,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#666",
+    marginTop: 4,
+    lineHeight: 20,
   },
   iconContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  icon: {
-    marginLeft: 15,
-  },
-  mainTitle: {
-    fontSize: 30,
-    fontWeight: "bold",
-    textAlign: "left",
-    marginTop: 10,
-  },
-  headerText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "left",
-    marginTop: 1,
-  },
-  sectionHeader: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "left",
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  searchBar: {
-    flex: 1,
-    height: 40,
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
     borderWidth: 1,
-    borderColor: "#000",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-  },
-  clearIcon: {
-    marginLeft: 10,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
   },
   scrollContainer: {
-    padding: 15,
-  },
-  item: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    backgroundColor: "#f3e2c7", // Change background color
-    borderRadius: 8, // Add border radius for rounded corners
-    marginBottom: 10, // Add margin bottom for spacing between items
-    flex: 1, // Ensure the item takes up available space
-  },
-  logoContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 15,
-  },
-  logoText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "red", // Change text color to red
-  },
-  itemText: {
-    fontSize: 16,
-    color: "#000",
-    flex: 1, // Allow the text to take up available space
-    flexWrap: 'wrap', // Allow text to wrap if necessary
-  },
-  contactItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    backgroundColor: "#f3e2c7",
-    borderRadius: 8,
-    marginBottom: 10,
     flex: 1,
   },
-  contactImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#fff",
-    marginRight: 15,
+  scrollContent: {
+    padding: 24,
+    paddingBottom: 40,
   },
-  contactText: {
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2c2c2c',
+    marginBottom: 12,
+    lineHeight: 30,
+  },
+  descriptionText: {
     fontSize: 16,
-    color: "#000",
-    flex: 1,
+    fontWeight: '500',
+    color: '#666',
+    marginBottom: 32,
+    lineHeight: 22,
+  },
+  grid: {
+    flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 30,
+  },
+  cardContainer: {
+    width: (width - 72) / 2,
+    marginBottom: 24,
+  },
+  card: {
+    borderRadius: 16,
+    backgroundColor: "#f3e2c7",
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    overflow: 'hidden',
+  },
+  cardContent: {
+    padding: 20,
+    minHeight: 140,
+    justifyContent: 'space-between',
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2c2c2c',
+    marginTop: 12,
+    marginBottom: 8,
+    lineHeight: 22,
+  },
+  cardDescription: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#666',
+    lineHeight: 20,
+  },
+  arrowContainer: {
+    alignSelf: 'flex-end',
+    marginTop: 12,
   },
 });
 
-export default FacultyDirectory;
+export default HomePage; 

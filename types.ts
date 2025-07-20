@@ -4,8 +4,10 @@ export interface Contact {
   phone: string
   email: string
   department: string
-  avatar: string
-  role: string
+  avatar?: string
+  image_url?: string
+  role?: string
+  designation?: string
 }
 
 export type RootStackParamList = {

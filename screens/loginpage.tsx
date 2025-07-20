@@ -63,7 +63,7 @@ const LoginPage: React.FC = () => {
 
       if (data && data.session) {
         // You can use rememberMe here to store credentials if needed
-        navigation.navigate("FacultyDirectory");
+        navigation.navigate("HomePage");
       } else {
         Alert.alert("Error", "Login failed. Please check your credentials.");
       }
