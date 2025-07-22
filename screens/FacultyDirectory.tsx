@@ -72,15 +72,7 @@ const FacultyDirectory: React.FC = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { theme } = useTheme();
 
-  // Department filter chips
-  const departmentFilters = [
-    { id: "", label: "All" },
-    { id: "CSE", label: "CSE" },
-    { id: "ECE", label: "ECE" },
-    { id: "ME", label: "ME" },
-    { id: "CE", label: "CE" },
-    { id: "IT", label: "IT" },
-  ];
+
 
   useEffect(() => {
     loadData();
@@ -314,107 +306,88 @@ const FacultyDirectory: React.FC = () => {
         </TouchableOpacity>
       );
     }
-    return (
-      <TouchableOpacity onPress={() => handlePress(item)}>
-        <View style={[styles.item, { backgroundColor: theme.cardColor, shadowColor: theme.shadowColor }]}>
-          <View style={[styles.logoContainer, { backgroundColor: theme.accentPrimary }]}>
-            <Text style={[styles.logoText, { color: theme.textPrimary }]}>{logos[item.name]}</Text>
-          </View>
-          <Text style={[styles.itemText, { color: theme.textPrimary }]}>{item.name}</Text>
-        </View>
-      </TouchableOpacity>
-    );
+    // Department/division logo circle
+    if (item.type === 'department' || item.type === 'division') {
+      return (
+        <TouchableOpacity onPress={() => handlePress(item)}>
+          <View style={[styles.item, { backgroundColor: theme.cardColor, shadowColor: theme.shadowColor }]}> 
+            <View style={styles.logoContainerWhiteFixed}> 
+              <Text style={styles.logoTextRedFixed}>{logos[item.name]}</Text> 
+            </View> 
+            <Text style={[styles.itemText, { color: theme.textPrimary }]}>{item.name}</Text> 
+          </View> 
+        </TouchableOpacity>
+      );
+    }
+    return null;
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: theme.backgroundColor, borderBottomColor: theme.borderColor }]}>
-        <View style={styles.headerContent}>
+      <View style={[styles.header, { backgroundColor: theme.backgroundColor, borderBottomColor: theme.borderColor }]}> 
+        <View style={styles.headerContent}> 
           <TouchableOpacity 
-            style={[styles.backButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]}
-            onPress={() => navigation.goBack()}
+            style={[styles.backButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]} 
+            onPress={() => navigation.goBack()} 
+          > 
+            <Icon name="arrow-left" size={20} color={theme.textPrimary} /> 
+          </TouchableOpacity> 
+          <View style={styles.titleContainer}> 
+            <Text style={[styles.title, { color: theme.textPrimary }]}>Faculty Directory</Text> 
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Browse departments and faculty</Text> 
+          </View> 
+          {/* Refresh Button */}
+          <TouchableOpacity
+            style={[styles.iconButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor, marginRight: 8 }]}
+            onPress={onRefresh}
           >
-            <Icon name="arrow-left" size={20} color={theme.textPrimary} />
+            <Icon name="refresh" size={20} color={theme.textPrimary} />
           </TouchableOpacity>
-          <View style={styles.titleContainer}>
-            <Text style={[styles.title, { color: theme.textPrimary }]}>Faculty Directory</Text>
-            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Browse departments and faculty</Text>
-          </View>
+          {/* Settings Button */}
           <TouchableOpacity 
-            style={[styles.iconButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]}
-            onPress={() => navigation.navigate("SettingsPage")}
-          >
-            <Icon name="cog" size={20} color={theme.textPrimary} />
-          </TouchableOpacity>
-        </View>
+            style={[styles.iconButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]} 
+            onPress={() => navigation.navigate("SettingsPage")} 
+          > 
+            <Icon name="cog" size={20} color={theme.textPrimary} /> 
+          </TouchableOpacity> 
+        </View> 
       </View>
 
       {/* Search Section */}
-      <View style={[styles.searchSection, { backgroundColor: theme.backgroundColor }]}>
-        <View style={[styles.searchContainer, { backgroundColor: theme.surfaceColor, shadowColor: theme.shadowColor }]}>
-          <View style={styles.searchBox}>
-            <Icon name="search" size={18} color={theme.textSecondary} style={styles.searchIcon} />
-            <TextInput
-              style={[styles.searchInput, { color: theme.textPrimary }]}
-              placeholder="Search by department or name"
-              placeholderTextColor={theme.textTertiary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery ? (
-              <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearButton}>
-                <Icon name="times-circle" size={18} color={theme.textSecondary} />
-              </TouchableOpacity>
-            ) : null}
-          </View>
-        </View>
-        
-        {/* Filter Chips */}
-        <View style={styles.filterContainer}>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterScroll}
-          >
-            {departmentFilters.map((filter) => (
-              <TouchableOpacity
-                key={filter.id}
-                style={[
-                  styles.filterChip,
-                  { backgroundColor: theme.borderLight, borderColor: theme.borderColor },
-                  selectedFilter === filter.id && { backgroundColor: theme.accentPrimary, borderColor: theme.accentSecondary }
-                ]}
-                onPress={() => setSelectedFilter(filter.id)}
-              >
-                <Text style={[
-                  styles.filterChipText,
-                  { color: theme.textSecondary },
-                  selectedFilter === filter.id && { color: theme.textPrimary, fontWeight: '600' }
-                ]}>
-                  {filter.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+      <View style={[styles.searchSection, { backgroundColor: theme.backgroundColor }]}> 
+        <View style={[styles.searchContainer, { backgroundColor: theme.surfaceColor, shadowColor: theme.shadowColor }]}> 
+          <View style={styles.searchBox}> 
+            <Icon name="search" size={18} color={theme.textSecondary} style={styles.searchIcon} /> 
+            <TextInput 
+              style={[styles.searchInput, { color: theme.textPrimary }]} 
+              placeholder="Search by department or name" 
+              placeholderTextColor={theme.textTertiary} 
+              value={searchQuery} 
+              onChangeText={setSearchQuery} 
+            /> 
+            {searchQuery ? ( 
+              <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearButton}> 
+                <Icon name="times-circle" size={18} color={theme.textSecondary} /> 
+              </TouchableOpacity> 
+            ) : null} 
+          </View> 
+        </View> 
       </View>
 
       {/* Content */}
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.accentPrimary} />
-          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading faculty data...</Text>
-        </View>
+        <View style={styles.loadingContainer}> 
+          <ActivityIndicator size="large" color={theme.accentPrimary} /> 
+          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading faculty data...</Text> 
+        </View> 
       ) : (
         <FlatList
           data={filteredList}
           keyExtractor={(item: any) => 'id' in item ? item.id.toString() : item.name}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
+          // Removed refreshControl for pull-to-refresh
         />
       )}
 
@@ -492,7 +465,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+    backgroundColor: 'rgba(255, 1, 1, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -683,6 +656,46 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 2,
     lineHeight: 18,
+  },
+  logoContainerWhite: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  logoTextRed: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#e74c3c",
+    lineHeight: 22,
+  },
+  logoContainerWhiteFixed: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#fff", // Always white
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  logoTextRedFixed: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#e74c3c", // Always red
+    lineHeight: 22,
   },
 });
 
