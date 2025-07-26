@@ -308,16 +308,16 @@ const FacultyDirectory: React.FC = () => {
     }
     // Department/division logo circle
     if (item.type === 'department' || item.type === 'division') {
-      return (
-        <TouchableOpacity onPress={() => handlePress(item)}>
-          <View style={[styles.item, { backgroundColor: theme.cardColor, shadowColor: theme.shadowColor }]}> 
+    return (
+      <TouchableOpacity onPress={() => handlePress(item)}>
+        <View style={[styles.item, { backgroundColor: theme.cardColor, shadowColor: theme.shadowColor }]}>
             <View style={styles.logoContainerWhiteFixed}> 
               <Text style={styles.logoTextRedFixed}>{logos[item.name]}</Text> 
-            </View> 
-            <Text style={[styles.itemText, { color: theme.textPrimary }]}>{item.name}</Text> 
-          </View> 
-        </TouchableOpacity>
-      );
+          </View>
+          <Text style={[styles.itemText, { color: theme.textPrimary }]}>{item.name}</Text>
+        </View>
+      </TouchableOpacity>
+    );
     }
     return null;
   };
@@ -325,18 +325,18 @@ const FacultyDirectory: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: theme.backgroundColor, borderBottomColor: theme.borderColor }]}> 
-        <View style={styles.headerContent}> 
+      <View style={[styles.header, { backgroundColor: theme.backgroundColor, borderBottomColor: theme.borderColor }]}>
+        <View style={styles.headerContent}>
           <TouchableOpacity 
-            style={[styles.backButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]} 
-            onPress={() => navigation.goBack()} 
-          > 
-            <Icon name="arrow-left" size={20} color={theme.textPrimary} /> 
-          </TouchableOpacity> 
-          <View style={styles.titleContainer}> 
-            <Text style={[styles.title, { color: theme.textPrimary }]}>Faculty Directory</Text> 
-            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Browse departments and faculty</Text> 
-          </View> 
+            style={[styles.backButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]}
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="arrow-left" size={20} color={theme.textPrimary} />
+          </TouchableOpacity>
+          <View style={styles.titleContainer}>
+            <Text style={[styles.title, { color: theme.textPrimary }]}>Faculty Directory</Text>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Browse departments and faculty</Text>
+          </View>
           {/* Refresh Button */}
           <TouchableOpacity
             style={[styles.iconButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor, marginRight: 8 }]}
@@ -346,41 +346,41 @@ const FacultyDirectory: React.FC = () => {
           </TouchableOpacity>
           {/* Settings Button */}
           <TouchableOpacity 
-            style={[styles.iconButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]} 
-            onPress={() => navigation.navigate("SettingsPage")} 
-          > 
-            <Icon name="cog" size={20} color={theme.textPrimary} /> 
-          </TouchableOpacity> 
-        </View> 
+            style={[styles.iconButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]}
+            onPress={() => navigation.navigate("SettingsPage")}
+          >
+            <Icon name="cog" size={20} color={theme.textPrimary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Search Section */}
-      <View style={[styles.searchSection, { backgroundColor: theme.backgroundColor }]}> 
-        <View style={[styles.searchContainer, { backgroundColor: theme.surfaceColor, shadowColor: theme.shadowColor }]}> 
-          <View style={styles.searchBox}> 
-            <Icon name="search" size={18} color={theme.textSecondary} style={styles.searchIcon} /> 
-            <TextInput 
-              style={[styles.searchInput, { color: theme.textPrimary }]} 
-              placeholder="Search by department or name" 
-              placeholderTextColor={theme.textTertiary} 
-              value={searchQuery} 
-              onChangeText={setSearchQuery} 
-            /> 
-            {searchQuery ? ( 
-              <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearButton}> 
-                <Icon name="times-circle" size={18} color={theme.textSecondary} /> 
-              </TouchableOpacity> 
-            ) : null} 
-          </View> 
-        </View> 
+      <View style={[styles.searchSection, { backgroundColor: theme.backgroundColor }]}>
+        <View style={[styles.searchContainer, { backgroundColor: theme.surfaceColor, shadowColor: theme.shadowColor }]}>
+          <View style={styles.searchBox}>
+            <Icon name="search" size={18} color={theme.textSecondary} style={styles.searchIcon} />
+            <TextInput
+              style={[styles.searchInput, { color: theme.textPrimary }]}
+              placeholder="Search by department or name"
+              placeholderTextColor={theme.textTertiary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery ? (
+              <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearButton}>
+                <Icon name="times-circle" size={18} color={theme.textSecondary} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        </View>
       </View>
 
       {/* Content */}
       {loading ? (
-        <View style={styles.loadingContainer}> 
-          <ActivityIndicator size="large" color={theme.accentPrimary} /> 
-          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading faculty data...</Text> 
-        </View> 
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.accentPrimary} />
+          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading faculty data...</Text>
+        </View>
       ) : (
         <FlatList
           data={filteredList}
