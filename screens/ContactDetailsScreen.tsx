@@ -138,6 +138,9 @@ const ContactDetails: React.FC = () => {
             )}
           </TouchableOpacity>
         ))}
+        
+        {/* Empty container at bottom */}
+        <View style={styles.bottomContainer} />
       </ScrollView>
 
       {/* Photo Viewer Modal */}
@@ -247,11 +250,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 16,
+    
   },
   contactCard: {
     backgroundColor: "#f3e2c7",
     borderRadius: 12,
-    padding: 20,
+    padding: 15,
     marginBottom: 16,
     elevation: 3,
     shadowColor: '#000',
@@ -342,6 +346,9 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     color: "#2c2c2c",
     lineHeight: 20,
+  },
+  bottomContainer: {
+    height: 60,
   },
 });
 

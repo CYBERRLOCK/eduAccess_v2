@@ -335,7 +335,7 @@ const FacultyDirectory: React.FC = () => {
           </TouchableOpacity> 
           <View style={styles.titleContainer}> 
             <Text style={[styles.title, { color: theme.textPrimary }]}>Faculty Directory</Text> 
-            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Browse departments and faculty</Text> 
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Browse faculty members</Text> 
           </View> 
           {/* Refresh Button */}
           <TouchableOpacity
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 20,
-    backgroundColor: "#f3e2c7",
+        backgroundColor: "#f3e2c7",
     borderRadius: 12,
     marginBottom: 16,
     elevation: 3,

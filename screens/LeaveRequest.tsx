@@ -9,9 +9,24 @@ import {
   FlatList,
   RefreshControl,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
 import { useTheme } from "../components/theme-provider";
 import Icon from "react-native-vector-icons/FontAwesome";
 import DateTimePicker from '@react-native-community/datetimepicker';
+import type { RootStackParamList } from "../App";
+
+type LeaveRequestNavigationProp = StackNavigationProp<RootStackParamList, 'LeaveRequest'>;
+
+interface LeaveRequest {
+  id: number;
+  type: string;
+  start: string;
+  end: string;
+  status: 'Approved' | 'Pending' | 'Rejected';
+  reason: string;
+  timestamp: string;
+}
 
 const LEAVE_TYPES = [
   "Casual Leave",
@@ -25,12 +40,13 @@ const STATUS_COLORS = {
   Rejected: "#F44336",
 };
 
-const mockLeaveRequests = [
+const mockLeaveRequests: LeaveRequest[] = [
   // Example data
   // { id: 1, type: "Sick Leave", start: "2024-07-01", end: "2024-07-03", status: "Approved", reason: "Fever", timestamp: "2024-06-28 10:30" },
 ];
 
 const LeaveRequest = () => {
+  const navigation = useNavigation<LeaveRequestNavigationProp>();
   const { theme } = useTheme();
   const [leaveType, setLeaveType] = useState(LEAVE_TYPES[0]);
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
@@ -44,12 +60,12 @@ const LeaveRequest = () => {
 
   const handleApply = () => {
     if (!reason.trim()) return;
-    const newRequest = {
+    const newRequest: LeaveRequest = {
       id: Date.now(),
       type: leaveType,
       start: startDate.toISOString().slice(0, 10),
       end: endDate.toISOString().slice(0, 10),
-      status: "Pending",
+      status: "Pending" as const,
       reason,
       timestamp: new Date().toISOString().slice(0, 16).replace("T", " "),
     };
@@ -65,7 +81,7 @@ const LeaveRequest = () => {
     setTimeout(() => setRefreshing(false), 1000); // Simulate refresh
   };
 
-  const renderLeaveCard = ({ item }) => (
+  const renderLeaveCard = ({ item }: { item: LeaveRequest }) => (
     <View style={[styles.card, { backgroundColor: theme.cardColor, shadowColor: theme.shadowColor }]}> 
       <View style={styles.cardHeader}>
         <Text style={[styles.cardType, { color: theme.textPrimary }]}>{item.type}</Text>
@@ -85,10 +101,32 @@ const LeaveRequest = () => {
     <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}> 
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.backgroundColor, borderBottomColor: theme.borderColor }]}> 
-        <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>Leave Request Management</Text>
-        <TouchableOpacity onPress={onRefresh} style={styles.refreshBtn}>
-          <Icon name="refresh" size={20} color={theme.textPrimary} />
-        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <TouchableOpacity 
+            style={[styles.backButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderLight }]}
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="arrow-left" size={20} color={theme.textPrimary} />
+          </TouchableOpacity>
+          <View style={styles.titleContainer}>
+            <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>Leave Request</Text>
+            <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>Management</Text>
+          </View>
+          <View style={styles.iconContainer}>
+            <TouchableOpacity 
+              style={[styles.iconButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderLight }]}
+              onPress={onRefresh}
+            >
+              <Icon name="refresh" size={20} color={theme.textPrimary} />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.iconButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderLight }]}
+              onPress={() => navigation.navigate("SettingsPage")}
+            >
+              <Icon name="cog" size={20} color={theme.textPrimary} />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {/* Section 1: Leave Application Form */}
@@ -196,21 +234,57 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingTop: 48,
-    paddingBottom: 16,
+    height: 120,
     borderBottomWidth: 1,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  headerContent: {
+    flex: 1,
+    paddingTop: 40,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+    borderWidth: 1,
+  },
+  titleContainer: {
+    flex: 1,
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: "bold",
+    lineHeight: 28,
   },
-  refreshBtn: {
-    padding: 8,
-    borderRadius: 20,
+  headerSubtitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginTop: 4,
+    lineHeight: 20,
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
+    borderWidth: 1,
   },
   scrollContent: {
     padding: 24,

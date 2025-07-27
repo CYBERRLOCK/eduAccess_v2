@@ -28,6 +28,24 @@ const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [userType, setUserType] = useState<'faculty' | 'admin'>('faculty');
+
+  // Admin email addresses
+  const adminEmails = [
+    "jayakrishans2026@cy.sjcetpalai.ac.in",
+    "jominjjoseph2026@cy.sjcetpalai.ac.in"
+  ];
+
+  // Auto-detect user type when email changes
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    const isAdminEmail = adminEmails.includes(text.toLowerCase());
+    if (isAdminEmail) {
+      setUserType('admin');
+    } else {
+      setUserType('faculty');
+    }
+  };
 
   useEffect(() => {
     const backAction = () => {
@@ -48,6 +66,21 @@ const LoginPage: React.FC = () => {
       return;
     }
 
+    // Check if the email has admin privileges
+    
+    const isAdminEmail = adminEmails.includes(email.toLowerCase());
+    
+    // Validate user type selection
+    if (isAdminEmail && userType !== 'admin') {
+      Alert.alert("Error", "This email has admin privileges. Please select 'Admin' user type.");
+      return;
+    }
+    
+    if (!isAdminEmail && userType === 'admin') {
+      Alert.alert("Error", "This email does not have admin privileges. Please select 'Faculty' user type.");
+      return;
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -62,6 +95,16 @@ const LoginPage: React.FC = () => {
       }
 
       if (data && data.session) {
+        // Store user type for use in other screens
+        const userInfo = {
+          email: email,
+          userType: userType,
+          isAdmin: isAdminEmail
+        };
+        
+        // You can store this in AsyncStorage or pass it to other screens
+        console.log("User login info:", userInfo);
+        
         // You can use rememberMe here to store credentials if needed
         navigation.navigate("HomePage");
       } else {
@@ -80,10 +123,46 @@ const LoginPage: React.FC = () => {
         style={styles.logo}
       />
       <Text style={styles.title}>Login with your Organization Email:</Text>
+      
+      {/* User Type Selection */}
+      <View style={styles.userTypeContainer}>
+        <Text style={styles.userTypeLabel}>Select User Type:</Text>
+        <View style={styles.userTypeButtons}>
+          <TouchableOpacity
+            style={[
+              styles.userTypeButton,
+              userType === 'faculty' && styles.userTypeButtonActive
+            ]}
+            onPress={() => setUserType('faculty')}
+          >
+            <Text style={[
+              styles.userTypeButtonText,
+              userType === 'faculty' && styles.userTypeButtonTextActive
+            ]}>
+              Faculty
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.userTypeButton,
+              userType === 'admin' && styles.userTypeButtonActive
+            ]}
+            onPress={() => setUserType('admin')}
+          >
+            <Text style={[
+              styles.userTypeButtonText,
+              userType === 'admin' && styles.userTypeButtonTextActive
+            ]}>
+              Admin
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      
       <TextInput
         style={styles.input}
         value={email}
-        onChangeText={setEmail}
+        onChangeText={handleEmailChange}
         keyboardType="email-address"
         autoCapitalize="none"
         placeholder="example@sjcetpalai.ac.in"
@@ -170,6 +249,44 @@ const styles = StyleSheet.create({
   link: {
     marginTop: 20,
     color: "#007bff",
+  },
+  userTypeContainer: {
+    width: "100%",
+    marginBottom: 20,
+  },
+  userTypeLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 12,
+    textAlign: "center",
+    color: "#333",
+  },
+  userTypeButtons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
+  },
+  userTypeButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: "#007bff",
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  userTypeButtonActive: {
+    backgroundColor: "#007bff",
+  },
+  userTypeButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#007bff",
+  },
+  userTypeButtonTextActive: {
+    color: "#fff",
   },
 });
 
