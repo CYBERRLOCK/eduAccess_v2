@@ -14,6 +14,7 @@ import FacultyNotice from "./screens/FacultyNotice";
 import ExamDuty from "./screens/ExamDuty";
 import LeaveRequest from "./screens/LeaveRequest";
 import Alerts from "./screens/alerts"; // Import Alerts screen
+import ExamSeatingArrangement from "./screens/ExamSeatingArrangement"; // Import ExamSeatingArrangement screen
 // ...import other screens...
 
 export type RootStackParamList = {
@@ -29,6 +30,7 @@ export type RootStackParamList = {
   ExamDuty: undefined;
   LeaveRequest: undefined;
   Alerts: undefined; // Add Alerts screen
+  ExamSeatingArrangement: undefined; // Add ExamSeatingArrangement screen
   // ...other routes...
 };
 
@@ -105,6 +107,11 @@ const App: React.FC = () => {
         <Stack.Screen
           name="Alerts"
           component={Alerts}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ExamSeatingArrangement"
+          component={ExamSeatingArrangement}
           options={{ headerShown: false }}
         />
         {/* Add other screens here */}

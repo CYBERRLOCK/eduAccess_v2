@@ -24,6 +24,15 @@ type HomePageNavigationProp = StackNavigationProp<RootStackParamList, 'HomePage'
 const HomePage = () => {
   const navigation = useNavigation<HomePageNavigationProp>();
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
+  
+  // Admin email detection (you can enhance this with AsyncStorage or context)
+  const adminEmails = [
+    "jayakrishans2026@cy.sjcetpalai.ac.in",
+    "jominjjoseph2026@cy.sjcetpalai.ac.in"
+  ];
+  
+  // For now, we'll use a simple approach - you can enhance this with proper state management
+  const isAdmin = true; // This should be set based on login state - temporarily set to true for testing
 
   // Handle back button press - ONLY when Home screen is focused
   useFocusEffect(
@@ -90,6 +99,17 @@ const HomePage = () => {
     },
   ];
 
+  // Admin-specific menu items
+  const adminMenuItems = [
+    ...menuItems,
+    {
+      title: 'Exam Seating Arrangement',
+      icon: 'th-large',
+      screen: 'ExamSeatingArrangement',
+      description: 'Manage exam seating arrangements'
+    }
+  ];
+
 
 
 
@@ -117,7 +137,6 @@ const HomePage = () => {
           </View>
           <View style={styles.titleContainer}>
             <Text style={styles.title}>EduAccess</Text>
-            <Text style={styles.subtitle}>Faculty Management System</Text>
           </View>
           <View style={styles.iconContainer}>
             <TouchableOpacity 
@@ -148,7 +167,7 @@ const HomePage = () => {
         </Text>
 
         <View style={styles.grid}>
-          {menuItems.map((item, index) => (
+          {(isAdmin ? adminMenuItems : menuItems).map((item, index) => (
             <View
               key={index}
               style={styles.cardContainer}
@@ -159,15 +178,17 @@ const HomePage = () => {
                 activeOpacity={0.9}
               >
                 <View style={styles.cardContent}>
-                  <View style={styles.iconContainer}>
-                    <Icon name={item.icon} size={32} color="#000" />
+                  <View style={styles.cardHeader}>
+                    <View style={styles.cardIconContainer}>
+                      <Icon name={item.icon} size={32} color="#2c2c2c" />
+                    </View>
+                    <View style={styles.cardArrowContainer}>
+                      <Icon name="arrow-right" size={14} color="#666" />
+                    </View>
                   </View>
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardDescription}>{item.description}</Text>
                   
-                  {/* Arrow */}
-                  <View style={styles.arrowContainer}>
-                    <Icon name="arrow-right" size={16} color="#000" />
+                  <View style={styles.cardTextContainer}>
+                    <Text style={styles.cardTitle}>{item.title}</Text>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -266,10 +287,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: 30,
+    gap: 16,
   },
   cardContainer: {
-    width: (width - 72) / 2,
-    marginBottom: 24,
+    width: (width - 72) / 2, // Increased width for bigger cards
+    marginBottom: 0, // Remove margin since we're using gap
   },
   card: {
     borderRadius: 16,
@@ -282,30 +304,50 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.05)',
     overflow: 'hidden',
+    height: 200, // Reduced height since we removed descriptions
   },
   cardContent: {
     padding: 20,
-    minHeight: 140,
+    height: '100%',
     justifyContent: 'space-between',
   },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  cardIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 7,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  cardArrowContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardTextContainer: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    paddingTop: 8,
+  },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#2c2c2c',
-    marginTop: 12,
-    marginBottom: 8,
-    lineHeight: 22,
+    lineHeight: 24,
+    textAlign: 'left',
   },
-  cardDescription: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#666',
-    lineHeight: 20,
-  },
-  arrowContainer: {
-    alignSelf: 'flex-end',
-    marginTop: 12,
-  },
+
 });
 
 export default HomePage; 
