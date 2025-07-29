@@ -34,10 +34,7 @@
   ],
   "exclude": [
     "node_modules",
-    "app/**/*",
-    "components/ui/**/*",
-    "lib/utils.ts",
-    "hooks/use-toast.ts"
+    "components/ui/**/*"
   ],
   "extends": "./node_modules/expo/tsconfig.base"
 }

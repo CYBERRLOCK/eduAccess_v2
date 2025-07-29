@@ -1,16 +1,14 @@
 import React from 'react';
 import {
   View,
+  Text,
   Image,
-  StyleSheet,
   TouchableOpacity,
+  StyleSheet,
   Dimensions,
   StatusBar,
-  Text,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
-
-const { width, height } = Dimensions.get('window');
+import { Ionicons } from '@expo/vector-icons';
 
 interface PhotoViewerProps {
   photoUrl: string;
@@ -18,29 +16,28 @@ interface PhotoViewerProps {
   onClose: () => void;
 }
 
+const { width, height } = Dimensions.get('window');
+
 const PhotoViewer: React.FC<PhotoViewerProps> = ({ photoUrl, facultyName, onClose }) => {
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <StatusBar hidden />
       
-      {/* Header with close button */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Icon name="times" size={24} color="#fff" />
+          <Ionicons name="close" size={24} color="#fff" />
         </TouchableOpacity>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>{facultyName}</Text>
-        </View>
+        <Text style={styles.facultyName}>{facultyName}</Text>
         <View style={styles.placeholder} />
       </View>
 
-      {/* Full screen image */}
+      {/* Image */}
       <View style={styles.imageContainer}>
         <Image
           source={{ uri: photoUrl }}
-          style={styles.fullImage}
+          style={styles.image}
           resizeMode="contain"
-          onError={(error) => console.log('Full screen image error:', error)}
         />
       </View>
     </View>
@@ -56,39 +53,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 20,
     paddingTop: 50,
-    paddingHorizontal: 24,
     paddingBottom: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
   closeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  titleContainer: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  title: {
+  facultyName: {
+    color: '#fff',
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    textAlign: 'center',
+    flex: 1,
   },
   placeholder: {
-    width: 44,
+    width: 40,
   },
   imageContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  fullImage: {
+  image: {
     width: width,
-    height: height * 0.8,
+    height: height * 0.7,
   },
 });
 

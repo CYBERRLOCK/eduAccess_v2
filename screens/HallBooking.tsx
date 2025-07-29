@@ -9,6 +9,7 @@ import {
   Alert,
   Dimensions,
   StatusBar,
+  BackHandler,
 } from 'react-native';
 import { useTheme } from '../components/theme-provider';
 import { useNavigation } from '@react-navigation/native';
@@ -52,6 +53,18 @@ const HallBooking: React.FC = () => {
   const navigation = useNavigation();
   const [isAdmin, setIsAdmin] = useState(false); // Toggle for admin view
   const [activeTab, setActiveTab] = useState<'book' | 'requests' | 'admin'>('book');
+
+  // Handle hardware back button
+  useEffect(() => {
+    const backAction = () => {
+      navigation.goBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () => backHandler.remove();
+  }, [navigation]);
   
   // Form state
   const [selectedHall, setSelectedHall] = useState('');
@@ -184,6 +197,7 @@ const HallBooking: React.FC = () => {
       backgroundColor: theme.backgroundColor,
       paddingTop: StatusBar.currentHeight || 0,
     },
+
     header: {
       flexDirection: 'row',
       alignItems: 'center',

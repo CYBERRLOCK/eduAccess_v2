@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, Image, ActivityIndicator, RefreshControl, Modal, ScrollView } from "react-native";
+import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, Image, RefreshControl, Modal, ScrollView, Animated } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from 'react-native-vector-icons/FontAwesome'; // Import FontAwesome icons
 import { StackNavigationProp } from '@react-navigation/stack'; // Import StackNavigationProp
@@ -11,6 +11,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { RootStackParamList } from "../App";
 import PhotoViewer from './PhotoViewer';
 import { useTheme } from "../components/theme-provider";
+import Loading from "../components/Loading";
 
 const CACHE_KEY_CONTACTS = 'faculty_contacts_cache';
 const CACHE_EXPIRY_KEY_CONTACTS = 'faculty_contacts_cache_expiry';
@@ -71,12 +72,21 @@ const FacultyDirectory: React.FC = () => {
   const [selectedFilter, setSelectedFilter] = useState<string>("");
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { theme } = useTheme();
+  
+  // Animation values for staggered fade-in
+  const [fadeAnimations] = useState<{ [key: string]: Animated.Value }>({});
+  
+  // Search focus animation
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [searchScale] = useState(new Animated.Value(1));
 
 
 
   useEffect(() => {
     loadData();
   }, []);
+
+
 
 
 
@@ -177,6 +187,45 @@ const FacultyDirectory: React.FC = () => {
     return filtered;
   })();
 
+  // Initialize animations for list items
+  useEffect(() => {
+    if (filteredList.length > 0) {
+      filteredList.forEach((item, index) => {
+        const key = 'id' in item ? String(item.id) : item.name;
+        if (!fadeAnimations[key]) {
+          fadeAnimations[key] = new Animated.Value(0);
+        }
+        
+        // Staggered animation with 100ms delay between items
+        Animated.timing(fadeAnimations[key], {
+          toValue: 1,
+          duration: 600,
+          delay: index * 100,
+          useNativeDriver: true,
+        }).start();
+      });
+    }
+  }, [filteredList]);
+
+  // Handle search focus/blur animations
+  const handleSearchFocus = () => {
+    setSearchFocused(true);
+    Animated.timing(searchScale, {
+      toValue: 1.02,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleSearchBlur = () => {
+    setSearchFocused(false);
+    Animated.timing(searchScale, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
   const handlePhotoPress = (photoUrl: string, facultyName: string) => {
     setSelectedPhoto({ url: photoUrl, name: facultyName });
     setPhotoViewerVisible(true);
@@ -267,57 +316,74 @@ const FacultyDirectory: React.FC = () => {
   };
 
   const renderItem = ({ item }: { item: any }) => {
+    const key = 'id' in item ? String(item.id) : item.name;
+    const fadeAnim = fadeAnimations[key] || new Animated.Value(1);
+
     if (item.type === 'header') {
-      return <Text style={[styles.sectionHeader, { color: theme.textPrimary }]}>{item.name}</Text>;
-    }
-    if (item.type === 'contact') {
-      console.log('Rendering contact item:', item);
-      console.log('Avatar URL:', item.avatar);
       return (
-        <TouchableOpacity onPress={() => handlePress(item)}>
-          <View style={[styles.contactItem, { backgroundColor: theme.cardColor, shadowColor: theme.shadowColor }]}>
-            <TouchableOpacity 
-              style={styles.contactImage}
-              onPress={() => {
-                if (item.avatar || item.image_url) {
-                  handlePhotoPress(item.avatar || item.image_url, item.name);
-                }
-              }}
-            >
-              {item.avatar || item.image_url ? (
-                <Image 
-                  source={{ uri: item.avatar || item.image_url }} 
-                  style={styles.contactImageInner}
-                  onError={(error) => console.log('Image loading error:', error)}
-                />
-              ) : (
-                <View style={[styles.placeholderImage, { backgroundColor: theme.accentTertiary }]}>
-                  <Text style={[styles.placeholderText, { color: theme.textPrimary }]}>
-                    {item.name ? item.name.charAt(0).toUpperCase() : '?'}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <View style={styles.contactTextContainer}>
-              <Text style={[styles.contactText, { color: theme.textPrimary }]}>{item.name}</Text>
-              <Text style={[styles.contactRole, { color: theme.textSecondary }]}>{item.role || item.designation || 'Faculty Member'}</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
+        <Animated.View style={{ opacity: fadeAnim }}>
+          <Text style={[styles.sectionHeader, { color: theme.textPrimary }]}>{item.name}</Text>
+        </Animated.View>
       );
     }
+    
+    if (item.type === 'contact') {
+      return (
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [20, 0]
+        })}] }}>
+          <TouchableOpacity onPress={() => handlePress(item)} activeOpacity={0.8}>
+            <View style={[styles.contactItem, { backgroundColor: theme.cardColor, shadowColor: theme.shadowColor }]}>
+              <TouchableOpacity 
+                style={styles.contactImage}
+                onPress={() => {
+                  if (item.avatar || item.image_url) {
+                    handlePhotoPress(item.avatar || item.image_url, item.name);
+                  }
+                }}
+              >
+                {item.avatar || item.image_url ? (
+                  <Image 
+                    source={{ uri: item.avatar || item.image_url }} 
+                    style={styles.contactImageInner}
+                    onError={(error) => console.log('Image loading error:', error)}
+                  />
+                ) : (
+                  <View style={[styles.placeholderImage, { backgroundColor: theme.accentTertiary }]}>
+                    <Text style={[styles.placeholderText, { color: theme.textPrimary }]}>
+                      {item.name ? item.name.charAt(0).toUpperCase() : '?'}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              <View style={styles.contactTextContainer}>
+                <Text style={[styles.contactText, { color: theme.textPrimary }]}>{item.name}</Text>
+                <Text style={[styles.contactRole, { color: theme.textSecondary }]}>{item.role || item.designation || 'Faculty Member'}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      );
+    }
+    
     // Department/division logo circle
     if (item.type === 'department' || item.type === 'division') {
-    return (
-      <TouchableOpacity onPress={() => handlePress(item)}>
-        <View style={[styles.item, { backgroundColor: theme.cardColor, shadowColor: theme.shadowColor }]}>
-            <View style={styles.logoContainerWhiteFixed}> 
-              <Text style={styles.logoTextRedFixed}>{logos[item.name]}</Text> 
-          </View>
-          <Text style={[styles.itemText, { color: theme.textPrimary }]}>{item.name}</Text>
-        </View>
-      </TouchableOpacity>
-    );
+      return (
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [20, 0]
+        })}] }}>
+          <TouchableOpacity onPress={() => handlePress(item)} activeOpacity={0.8}>
+            <View style={[styles.item, { backgroundColor: theme.cardColor, shadowColor: theme.shadowColor }]}>
+              <View style={styles.logoContainerWhiteFixed}> 
+                <Text style={styles.logoTextRedFixed}>{logos[item.name]}</Text> 
+              </View>
+              <Text style={[styles.itemText, { color: theme.textPrimary }]}>{item.name}</Text>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      );
     }
     return null;
   };
@@ -358,39 +424,65 @@ const FacultyDirectory: React.FC = () => {
 
       {/* Search Section */}
       <View style={[styles.searchSection, { backgroundColor: theme.backgroundColor }]}>
-        <View style={[styles.searchContainer, { backgroundColor: theme.surfaceColor, shadowColor: theme.shadowColor }]}>
+        <Animated.View 
+          style={[
+            styles.searchContainer, 
+            { 
+              backgroundColor: theme.surfaceColor, 
+              shadowColor: theme.shadowColor,
+              transform: [{ scale: searchScale }],
+              borderWidth: searchFocused ? 2 : 1,
+              borderColor: searchFocused ? theme.accentPrimary : theme.borderColor,
+            }
+          ]}
+        >
           <View style={styles.searchBox}>
-            <Icon name="search" size={18} color={theme.textSecondary} style={styles.searchIcon} />
+            <Icon 
+              name="search" 
+              size={20} 
+              color={searchFocused ? theme.accentPrimary : theme.textSecondary} 
+              style={styles.searchIcon} 
+            />
             <TextInput
               style={[styles.searchInput, { color: theme.textPrimary }]}
               placeholder="Search by department or name"
               placeholderTextColor={theme.textTertiary}
               value={searchQuery}
               onChangeText={setSearchQuery}
+              onFocus={handleSearchFocus}
+              onBlur={handleSearchBlur}
             />
             {searchQuery ? (
-              <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearButton}>
-                <Icon name="times-circle" size={18} color={theme.textSecondary} />
+              <TouchableOpacity 
+                onPress={() => setSearchQuery("")} 
+                style={styles.clearButton}
+                activeOpacity={0.7}
+              >
+                <Icon name="times-circle" size={20} color={theme.textSecondary} />
               </TouchableOpacity>
             ) : null}
           </View>
-        </View>
+        </Animated.View>
       </View>
 
       {/* Content */}
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.accentPrimary} />
-          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading faculty data...</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredList}
-          keyExtractor={(item: any) => 'id' in item ? item.id.toString() : item.name}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContainer}
-          // Removed refreshControl for pull-to-refresh
+        <Loading 
+          message="Loading faculty data..." 
+          size="large" 
+          variant="spinner" 
         />
+      ) : (
+        <Animated.View style={{ flex: 1, opacity: searchQuery ? 1 : 1 }}>
+          <FlatList
+            data={filteredList}
+            keyExtractor={(item: any) => 'id' in item ? item.id.toString() : item.name}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
+            // Removed refreshControl for pull-to-refresh
+          />
+        </Animated.View>
       )}
 
       {/* Photo Viewer Modal */}
@@ -480,32 +572,37 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     backgroundColor: "#fff",
-    borderRadius: 16,
-    elevation: 3,
+    borderRadius: 28, // Pill-style rounded corners
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
     marginBottom: 16,
+    minHeight: 56, // Larger touch target
   },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 18,
+    minHeight: 56, // Ensure consistent height
   },
   searchIcon: {
     marginRight: 16,
+    opacity: 0.8,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    fontWeight: "400",
+    fontWeight: "500",
     color: "#2c2c2c",
-    lineHeight: 20,
+    lineHeight: 22,
+    paddingVertical: 4,
   },
   clearButton: {
     marginLeft: 16,
+    padding: 4,
   },
   filterContainer: {
     marginTop: 8,
@@ -535,129 +632,125 @@ const styles = StyleSheet.create({
     color: '#2c2c2c',
     fontWeight: '600',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#666",
-    lineHeight: 20,
-  },
+
   listContainer: {
     padding: 24,
     paddingBottom: 40,
   },
   sectionHeader: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 22,
+    fontWeight: "700",
     color: "#2c2c2c",
-    marginTop: 24,
-    marginBottom: 16,
-    lineHeight: 26,
+    marginTop: 32,
+    marginBottom: 20,
+    lineHeight: 28,
+    letterSpacing: -0.5,
   },
   item: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 20,
-        backgroundColor: "#f3e2c7",
-    borderRadius: 12,
+    padding: 24,
+    backgroundColor: "#f3e2c7",
+    borderRadius: 16,
     marginBottom: 16,
-    elevation: 3,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   logoContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 16,
-    elevation: 2,
+    marginRight: 20,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   logoText: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 20,
+    fontWeight: "700",
     color: "#e74c3c",
-    lineHeight: 22,
+    lineHeight: 24,
   },
   itemText: {
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: 18,
+    fontWeight: "600",
     color: "#2c2c2c",
     flex: 1,
-    lineHeight: 22,
+    lineHeight: 24,
   },
   contactItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 20,
+    padding: 24,
     backgroundColor: "#f3e2c7",
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 16,
-    elevation: 3,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   contactImage: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: "#fff",
-    marginRight: 16,
+    marginRight: 20,
     overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   contactImageInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
   },
   placeholderImage: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: "#f3e2c7",
     justifyContent: 'center',
     alignItems: 'center',
   },
   placeholderText: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '700',
     color: '#2c2c2c',
   },
   contactTextContainer: {
     flex: 1,
-    marginLeft: 16,
+    marginLeft: 20,
   },
   contactText: {
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: 18,
+    fontWeight: "700",
     color: "#2c2c2c",
-    lineHeight: 22,
+    lineHeight: 24,
+    marginBottom: 4,
   },
   contactRole: {
-    fontSize: 14,
-    fontWeight: "400",
+    fontSize: 15,
+    fontWeight: "500",
     color: "#666",
     marginTop: 2,
-    lineHeight: 18,
+    lineHeight: 20,
   },
   logoContainerWhite: {
     width: 56,
@@ -680,24 +773,24 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   logoContainerWhiteFixed: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: "#fff", // Always white
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 16,
-    elevation: 2,
+    marginRight: 20,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   logoTextRedFixed: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 20,
+    fontWeight: "700",
     color: "#e74c3c", // Always red
-    lineHeight: 22,
+    lineHeight: 24,
   },
 });
 

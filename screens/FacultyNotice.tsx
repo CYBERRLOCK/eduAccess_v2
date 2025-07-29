@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -9,7 +9,8 @@ import {
   Dimensions,
   StatusBar,
   Image,
-  Modal 
+  Modal,
+  BackHandler
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -76,6 +77,18 @@ const FacultyNotice = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
+
+  // Handle hardware back button
+  useEffect(() => {
+    const backAction = () => {
+      navigation.goBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () => backHandler.remove();
+  }, [navigation]);
 
   const filteredNotices = mockNotices.filter(notice => {
     const matchesSearch = notice.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -4,21 +4,22 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ThemeProvider } from "./components/theme-provider";
 import LoginPage from "./screens/loginpage";
 import SignupPage from "./screens/signuppage";
+import MainScreen from "./screens/MainScreen";
 import FacultyDirectory from "./screens/FacultyDirectory";
 import SettingsPage from "./screens/SettingsPage"; // Import SettingsPage
-
 import ContactDetailsScreen from "./screens/ContactDetailsScreen"; // Import ContactDetailsScreen
-import HomePage from "./screens/homepage";
 import HallBooking from "./screens/HallBooking";
 import FacultyNotice from "./screens/FacultyNotice";
 import ExamDuty from "./screens/ExamDuty";
 import LeaveRequest from "./screens/LeaveRequest";
 import NotificationScreen from "./screens/NotificationScreen"; // Import NotificationScreen
 import ExamSeatingArrangement from "./screens/ExamSeatingArrangement"; // Import ExamSeatingArrangement screen
+import ProfileScreen from "./screens/ProfileScreen"; // Import ProfileScreen
 
 export type RootStackParamList = {
   LoginPage: undefined;
   SignupPage: undefined;
+  MainScreen: undefined;
   FacultyDirectory: undefined;
   SettingsPage: undefined; // Add SettingsPage
   NotificationScreen: undefined; // Add NotificationScreen
@@ -29,6 +30,7 @@ export type RootStackParamList = {
   ExamDuty: undefined;
   LeaveRequest: undefined;
   ExamSeatingArrangement: undefined; // Add ExamSeatingArrangement screen
+  ProfileScreen: undefined; // Add ProfileScreen
   // ...other routes...
 };
 
@@ -56,10 +58,11 @@ const App: React.FC = () => {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="HomePage"
-          component={HomePage}
+          name="MainScreen"
+          component={MainScreen}
           options={{ headerShown: false }}
         />
+        
         <Stack.Screen
           name="FacultyDirectory"
           component={FacultyDirectory}
@@ -105,6 +108,11 @@ const App: React.FC = () => {
         <Stack.Screen
           name="ExamSeatingArrangement"
           component={ExamSeatingArrangement}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ProfileScreen"
+          component={ProfileScreen}
           options={{ headerShown: false }}
         />
         {/* Add other screens here */}

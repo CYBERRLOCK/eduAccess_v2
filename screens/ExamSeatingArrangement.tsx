@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -9,7 +9,8 @@ import {
   Dimensions,
   StatusBar,
   Modal,
-  Alert 
+  Alert,
+  BackHandler
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -58,6 +59,18 @@ const ExamSeatingArrangement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [seatingArrangements, setSeatingArrangements] = useState(mockSeatingArrangements);
+
+  // Handle hardware back button
+  useEffect(() => {
+    const backAction = () => {
+      navigation.goBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () => backHandler.remove();
+  }, [navigation]);
 
   const filteredArrangements = seatingArrangements.filter(arrangement =>
     arrangement.examName.toLowerCase().includes(searchQuery.toLowerCase()) ||

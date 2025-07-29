@@ -20,11 +20,13 @@ import supabase from "../supabase";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import type { RootStackParamList } from "../App";
+import { useTheme } from "../components/theme-provider";
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, "LoginPage">;
 
 const LoginPage: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { theme } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -66,7 +68,7 @@ const LoginPage: React.FC = () => {
 
       if (data && data.session) {
         // You can use rememberMe here to store credentials if needed
-        navigation.navigate("HomePage");
+        navigation.navigate("MainScreen");
       } else {
         Alert.alert("Error", "Login failed. Please check your credentials.");
       }
@@ -114,27 +116,37 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Image
         source={{ uri: 'https://i.postimg.cc/JsRJXTkP/Main-Logo.png' }}
         style={styles.logo}
       />
-      <Text style={styles.title}>Login with your Organization Email:</Text>
+      <Text style={[styles.title, { color: theme.textPrimary }]}>Login with your Organization Email:</Text>
       
       <TextInput
-        style={styles.input}
+        style={[styles.input, { 
+          borderColor: theme.borderColor, 
+          backgroundColor: theme.surfaceColor,
+          color: theme.textPrimary 
+        }]}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
         placeholder="example@sjcetpalai.ac.in"
+        placeholderTextColor={theme.textTertiary}
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { 
+          borderColor: theme.borderColor, 
+          backgroundColor: theme.surfaceColor,
+          color: theme.textPrimary 
+        }]}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
         placeholder="Password"
+        placeholderTextColor={theme.textTertiary}
       />
       
       {/* Forgot Password Link */}
@@ -142,7 +154,7 @@ const LoginPage: React.FC = () => {
         style={styles.forgotPasswordContainer}
         onPress={handleForgotPassword}
       >
-        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+        <Text style={[styles.forgotPasswordText, { color: '#007bff' }]}>Forgot Password?</Text>
       </TouchableOpacity>
       
       {/* Remember Me Checkbox */}
@@ -151,13 +163,23 @@ const LoginPage: React.FC = () => {
           style={styles.checkbox}
           onPress={() => setRememberMe(!rememberMe)}
         >
-          <View style={[styles.checkboxBox, rememberMe && styles.checkboxChecked]} />
+          <View style={[
+            styles.checkboxBox, 
+            { borderColor: '#007bff' },
+            rememberMe && { backgroundColor: '#007bff' }
+          ]} />
         </Pressable>
-        <Text style={styles.rememberMeText}>Remember Me</Text>
+        <Text style={[styles.rememberMeText, { color: theme.textPrimary }]}>Remember Me</Text>
       </View>
-      <Button title="Login" onPress={handleLogin} />
+      <TouchableOpacity 
+        style={[styles.loginButton, { backgroundColor: '#007bff' }]}
+        onPress={handleLogin}
+        activeOpacity={0.8}
+      >
+        <Text style={[styles.loginButtonText, { color: '#ffffff' }]}>Login</Text>
+      </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate("SignupPage")}>
-        <Text style={styles.link}>Don't have an account? Sign up</Text>
+        <Text style={[styles.link, { color: '#007bff' }]}>Don't have an account? Sign up</Text>
       </TouchableOpacity>
     </View>
   );
@@ -206,12 +228,8 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderWidth: 2,
-    borderColor: "#007bff",
     borderRadius: 4,
     backgroundColor: "#fff",
-  },
-  checkboxChecked: {
-    backgroundColor: "#007bff",
   },
   rememberMeText: {
     fontSize: 16,
@@ -229,6 +247,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#007bff",
     textDecorationLine: "underline",
+  },
+  loginButton: {
+    width: "100%",
+    height: 50,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  loginButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
 
