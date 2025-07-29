@@ -28,24 +28,7 @@ const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [userType, setUserType] = useState<'faculty' | 'admin'>('faculty');
 
-  // Admin email addresses
-  const adminEmails = [
-    "jayakrishans2026@cy.sjcetpalai.ac.in",
-    "jominjjoseph2026@cy.sjcetpalai.ac.in"
-  ];
-
-  // Auto-detect user type when email changes
-  const handleEmailChange = (text: string) => {
-    setEmail(text);
-    const isAdminEmail = adminEmails.includes(text.toLowerCase());
-    if (isAdminEmail) {
-      setUserType('admin');
-    } else {
-      setUserType('faculty');
-    }
-  };
 
   useEffect(() => {
     const backAction = () => {
@@ -66,20 +49,7 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    // Check if the email has admin privileges
-    
-    const isAdminEmail = adminEmails.includes(email.toLowerCase());
-    
-    // Validate user type selection
-    if (isAdminEmail && userType !== 'admin') {
-      Alert.alert("Error", "This email has admin privileges. Please select 'Admin' user type.");
-      return;
-    }
-    
-    if (!isAdminEmail && userType === 'admin') {
-      Alert.alert("Error", "This email does not have admin privileges. Please select 'Faculty' user type.");
-      return;
-    }
+
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -95,16 +65,6 @@ const LoginPage: React.FC = () => {
       }
 
       if (data && data.session) {
-        // Store user type for use in other screens
-        const userInfo = {
-          email: email,
-          userType: userType,
-          isAdmin: isAdminEmail
-        };
-        
-        // You can store this in AsyncStorage or pass it to other screens
-        console.log("User login info:", userInfo);
-        
         // You can use rememberMe here to store credentials if needed
         navigation.navigate("HomePage");
       } else {
@@ -116,6 +76,43 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email || !email.trim()) {
+      Alert.alert("Error", "Please enter your email address first.");
+      return;
+    }
+
+    if (!email.endsWith("@sjcetpalai.ac.in") && !email.endsWith("@cy.sjcetpalai.ac.in")) {
+      Alert.alert("Error", "Only @sjcetpalai.ac.in emails are allowed.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'eduaccess://reset-password',
+      });
+
+      if (error) {
+        Alert.alert("Error", error.message);
+        return;
+      }
+
+      Alert.alert(
+        "Password Reset Email Sent", 
+        "Please check your email for password reset instructions. If you don't see it, check your spam folder.",
+        [
+          {
+            text: "OK",
+            onPress: () => console.log("Password reset email sent to:", email)
+          }
+        ]
+      );
+    } catch (e) {
+      console.log("Password reset error:", e);
+      Alert.alert("Error", "Failed to send password reset email. Please try again.");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Image
@@ -124,45 +121,10 @@ const LoginPage: React.FC = () => {
       />
       <Text style={styles.title}>Login with your Organization Email:</Text>
       
-      {/* User Type Selection */}
-      <View style={styles.userTypeContainer}>
-        <Text style={styles.userTypeLabel}>Select User Type:</Text>
-        <View style={styles.userTypeButtons}>
-          <TouchableOpacity
-            style={[
-              styles.userTypeButton,
-              userType === 'faculty' && styles.userTypeButtonActive
-            ]}
-            onPress={() => setUserType('faculty')}
-          >
-            <Text style={[
-              styles.userTypeButtonText,
-              userType === 'faculty' && styles.userTypeButtonTextActive
-            ]}>
-              Faculty
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.userTypeButton,
-              userType === 'admin' && styles.userTypeButtonActive
-            ]}
-            onPress={() => setUserType('admin')}
-          >
-            <Text style={[
-              styles.userTypeButtonText,
-              userType === 'admin' && styles.userTypeButtonTextActive
-            ]}>
-              Admin
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-      
       <TextInput
         style={styles.input}
         value={email}
-        onChangeText={handleEmailChange}
+        onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
         placeholder="example@sjcetpalai.ac.in"
@@ -174,6 +136,15 @@ const LoginPage: React.FC = () => {
         secureTextEntry
         placeholder="Password"
       />
+      
+      {/* Forgot Password Link */}
+      <TouchableOpacity 
+        style={styles.forgotPasswordContainer}
+        onPress={handleForgotPassword}
+      >
+        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+      </TouchableOpacity>
+      
       {/* Remember Me Checkbox */}
       <View style={styles.rememberMeContainer}>
         <Pressable
@@ -250,43 +221,14 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: "#007bff",
   },
-  userTypeContainer: {
-    width: "100%",
+  forgotPasswordContainer: {
+    alignSelf: "flex-end",
     marginBottom: 20,
   },
-  userTypeLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 12,
-    textAlign: "center",
-    color: "#333",
-  },
-  userTypeButtons: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 12,
-  },
-  userTypeButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: "#007bff",
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  userTypeButtonActive: {
-    backgroundColor: "#007bff",
-  },
-  userTypeButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
+  forgotPasswordText: {
+    fontSize: 14,
     color: "#007bff",
-  },
-  userTypeButtonTextActive: {
-    color: "#fff",
+    textDecorationLine: "underline",
   },
 });
 

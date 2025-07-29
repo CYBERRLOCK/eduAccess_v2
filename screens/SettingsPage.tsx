@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import supabase from "../supabase"; // Import Supabase client
 import { useNavigation, NavigationProp } from "@react-navigation/native";
-import type  RootStackParamList  from "../App"; // Import the type for your navigation stack
+import type { RootStackParamList } from "../App"; // Fixed import syntax
 import { useTheme } from "../components/theme-provider";
 import Icon from 'react-native-vector-icons/FontAwesome';
 
@@ -236,11 +236,3 @@ const styles = StyleSheet.create({
 });
 
 export default SettingsPage;
-
-// Ensure that RootStackParamList is exported
-export type RootStackParamList = {
-  // Define your routes here
-  LoginPage: undefined;
-  SettingsPage: undefined;
-  // Add other routes as needed
-};

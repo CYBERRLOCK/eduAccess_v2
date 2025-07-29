@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -16,25 +16,29 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 type HomePageNavigationProp = StackNavigationProp<RootStackParamList, 'HomePage'>;
 
-const HomePage = () => {
+interface MenuItem {
+  title: string;
+  icon: string;
+  screen: string;
+  description: string;
+}
+
+const HomePage: React.FC = () => {
   const navigation = useNavigation<HomePageNavigationProp>();
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
   
-  // Admin email detection (you can enhance this with AsyncStorage or context)
+  // Admin email detection
   const adminEmails = [
     "jayakrishans2026@cy.sjcetpalai.ac.in",
-    "jominjjoseph2026@cy.sjcetpalai.ac.in"
   ];
   
-  // For now, we'll use a simple approach - you can enhance this with proper state management
-  const isAdmin = true; // This should be set based on login state - temporarily set to true for testing
+  const isAdmin = true; // This should be set based on login state
 
-  // Handle back button press - ONLY when Home screen is focused
+  // Handle back button press
   useFocusEffect(
     React.useCallback(() => {
       const backAction = () => {
@@ -54,19 +58,15 @@ const HomePage = () => {
           ],
           { cancelable: true }
         );
-        return true; // Prevent default back action
+        return true;
       };
 
       const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-
-      // Cleanup when screen loses focus
-      return () => {
-        backHandler.remove();
-      };
+      return () => backHandler.remove();
     }, [])
   );
   
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     { 
       title: 'Faculty Directory', 
       icon: 'users', 
@@ -99,8 +99,7 @@ const HomePage = () => {
     },
   ];
 
-  // Admin-specific menu items
-  const adminMenuItems = [
+  const adminMenuItems: MenuItem[] = [
     ...menuItems,
     {
       title: 'Exam Seating Arrangement',
@@ -110,46 +109,69 @@ const HomePage = () => {
     }
   ];
 
-
-
-
-
-
-
   const handleCardPress = (index: number, screen: string) => {
     setSelectedCard(index);
     navigation.navigate(screen as any);
     setSelectedCard(null);
   };
 
+  const renderCard = (item: MenuItem, index: number) => (
+    <View key={index} style={styles.cardContainer}>
+      <TouchableOpacity
+        style={[
+          styles.card,
+          selectedCard === index && styles.cardPressed
+        ]}
+        onPress={() => handleCardPress(index, item.screen)}
+        activeOpacity={0.9}
+      >
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardIconContainer}>
+              <Icon name={item.icon} size={32} color="#2c2c2c" />
+            </View>
+            <View style={styles.cardArrowContainer}>
+              <Icon name="arrow-right" size={14} color="#666" />
+            </View>
+          </View>
+          
+          <View style={styles.cardTextContainer}>
+            <Text style={styles.cardTitle}>{item.title}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a2e" />
+      <StatusBar barStyle="dark-content" backgroundColor="#f8f1e4" />
       
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <View>
+          <View style={styles.logoSection}>
             <Image 
               source={{ uri: 'https://i.postimg.cc/JsRJXTkP/Main-Logo.png' }} 
               style={styles.logo} 
             />
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>EduAccess</Text>
+            </View>
           </View>
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>EduAccess</Text>
-          </View>
+          
           <View style={styles.iconContainer}>
             <TouchableOpacity 
               style={styles.iconButton}
               onPress={() => navigation.navigate("NotificationScreen")}
             >
-              <Icon name="bell" size={20} color="#000" />
+              <Icon name="bell" size={20} color="#2c2c2c" />
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.iconButton}
               onPress={() => navigation.navigate("SettingsPage")}
             >
-              <Icon name="cog" size={20} color="#000" />
+              <Icon name="cog" size={20} color="#2c2c2c" />
             </TouchableOpacity>
           </View>
         </View>
@@ -161,39 +183,12 @@ const HomePage = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <Text style={styles.welcomeText}>Welcome back!</Text>
-        <Text style={styles.descriptionText}>
-          Choose a service to get started
-        </Text>
+
 
         <View style={styles.grid}>
-          {(isAdmin ? adminMenuItems : menuItems).map((item, index) => (
-            <View
-              key={index}
-              style={styles.cardContainer}
-            >
-              <TouchableOpacity
-                style={styles.card}
-                onPress={() => handleCardPress(index, item.screen)}
-                activeOpacity={0.9}
-              >
-                <View style={styles.cardContent}>
-                  <View style={styles.cardHeader}>
-                    <View style={styles.cardIconContainer}>
-                      <Icon name={item.icon} size={32} color="#2c2c2c" />
-                    </View>
-                    <View style={styles.cardArrowContainer}>
-                      <Icon name="arrow-right" size={14} color="#666" />
-                    </View>
-                  </View>
-                  
-                  <View style={styles.cardTextContainer}>
-                    <Text style={styles.cardTitle}>{item.title}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            </View>
-          ))}
+          {(isAdmin ? adminMenuItems : menuItems).map((item, index) => 
+            renderCard(item, index)
+          )}
         </View>
       </ScrollView>
     </View>
@@ -224,13 +219,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  logoSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
   logo: {
     width: 48,
     height: 48,
     borderRadius: 12,
   },
   titleContainer: {
-    flex: 1,
     marginLeft: 16,
   },
   title: {
@@ -238,13 +237,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#2c2c2c",
     lineHeight: 28,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#666",
-    marginTop: 4,
-    lineHeight: 20,
   },
   iconContainer: {
     flexDirection: 'row',
@@ -268,30 +260,14 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 40,
   },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2c2c2c',
-    marginBottom: 12,
-    lineHeight: 30,
-  },
-  descriptionText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#666',
-    marginBottom: 32,
-    lineHeight: 22,
-  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 30,
     gap: 16,
   },
   cardContainer: {
-    width: (width - 72) / 2, // Increased width for bigger cards
-    marginBottom: 0, // Remove margin since we're using gap
+    width: (width - 72) / 2,
   },
   card: {
     borderRadius: 16,
@@ -304,7 +280,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.05)',
     overflow: 'hidden',
-    height: 200, // Reduced height since we removed descriptions
+    height: 250,
+  },
+  cardPressed: {
+    transform: [{ scale: 0.98 }],
+    shadowOpacity: 0.08,
   },
   cardContent: {
     padding: 20,
@@ -347,7 +327,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     textAlign: 'left',
   },
-
 });
 
 export default HomePage; 

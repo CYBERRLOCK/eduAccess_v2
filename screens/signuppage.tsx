@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity, Image, BackHandler } from "react-native";
 import supabase from "../supabase";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
-import type { RootStackParamList } from "../types";
+import type { RootStackParamList } from "../App";
 
 const SignupPage: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();

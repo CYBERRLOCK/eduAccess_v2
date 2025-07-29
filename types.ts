@@ -10,13 +10,3 @@ export interface Contact {
   designation?: string
 }
 
-export type RootStackParamList = {
-  LoginPage: undefined;
-  SignupPage: undefined;
-  FacultyDirectory: undefined;
-  SettingsPage: undefined;
-  ContactDetails: { contacts: any[]; department: string };
-  NotificationScreen: undefined;
-  // Add other routes as needed
-};
-

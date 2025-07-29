@@ -6,16 +6,15 @@ import LoginPage from "./screens/loginpage";
 import SignupPage from "./screens/signuppage";
 import FacultyDirectory from "./screens/FacultyDirectory";
 import SettingsPage from "./screens/SettingsPage"; // Import SettingsPage
-import NotificationScreen from "./screens/NotificationScreen"; // Import NotificationScreen
+
 import ContactDetailsScreen from "./screens/ContactDetailsScreen"; // Import ContactDetailsScreen
 import HomePage from "./screens/homepage";
 import HallBooking from "./screens/HallBooking";
 import FacultyNotice from "./screens/FacultyNotice";
 import ExamDuty from "./screens/ExamDuty";
 import LeaveRequest from "./screens/LeaveRequest";
-import Alerts from "./screens/alerts"; // Import Alerts screen
+import NotificationScreen from "./screens/NotificationScreen"; // Import NotificationScreen
 import ExamSeatingArrangement from "./screens/ExamSeatingArrangement"; // Import ExamSeatingArrangement screen
-// ...import other screens...
 
 export type RootStackParamList = {
   LoginPage: undefined;
@@ -29,7 +28,6 @@ export type RootStackParamList = {
   FacultyNotice: undefined;
   ExamDuty: undefined;
   LeaveRequest: undefined;
-  Alerts: undefined; // Add Alerts screen
   ExamSeatingArrangement: undefined; // Add ExamSeatingArrangement screen
   // ...other routes...
 };
@@ -102,11 +100,6 @@ const App: React.FC = () => {
         <Stack.Screen
           name="LeaveRequest"
           component={LeaveRequest}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Alerts"
-          component={Alerts}
           options={{ headerShown: false }}
         />
         <Stack.Screen

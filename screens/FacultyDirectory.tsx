@@ -328,6 +328,16 @@ const FacultyDirectory: React.FC = () => {
       <View style={[styles.header, { backgroundColor: theme.backgroundColor, borderBottomColor: theme.borderColor }]}>
         <View style={styles.headerContent}>
           <TouchableOpacity 
+            style={[styles.backButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]}
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="arrow-left" size={20} color={theme.textPrimary} />
+          </TouchableOpacity>
+          
+          <View style={styles.titleContainer}>
+            <Text style={[styles.title, { color: theme.textPrimary }]}>Faculty Directory</Text>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Find faculty members</Text>
+          </View>
 
           {/* Refresh Button */}
           <TouchableOpacity

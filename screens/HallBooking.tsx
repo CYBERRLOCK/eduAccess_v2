@@ -159,7 +159,7 @@ const HallBooking: React.FC = () => {
     
     const updatedMyRequests = myRequests.map(req => 
       req.id === requestId 
-        ? { ...req, status: action === 'approve' ? 'Approved' : 'Rejected' }
+        ? { ...req, status: action === 'approve' ? 'Approved' as const : 'Rejected' as const }
         : req
     );
     setMyRequests(updatedMyRequests);
