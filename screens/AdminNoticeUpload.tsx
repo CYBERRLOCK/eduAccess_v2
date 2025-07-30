@@ -18,7 +18,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import * as DocumentPicker from 'expo-document-picker';
 import type { RootStackParamList } from '../App';
 import { useTheme } from '../components/theme-provider';
-import { createFacultyNotice, uploadNoticePDF, type FacultyNotice } from '../api/noticesApi';
+import { createFacultyNotice, uploadNoticePDF, verifyStorageSetup, type FacultyNotice } from '../api/noticesApi';
 
 type AdminNoticeUploadNavigationProp = StackNavigationProp<RootStackParamList, 'AdminNoticeUpload'>;
 
@@ -81,11 +81,25 @@ const AdminNoticeUpload = () => {
 
       // Upload PDF if selected
       if (pdfFile) {
-        const fileName = `notice_${Date.now()}_${pdfFile.name}`;
         try {
+          console.log('Starting PDF upload...');
+          
+          // Verify storage setup first
+          const isStorageReady = await verifyStorageSetup();
+          if (!isStorageReady) {
+            throw new Error('Storage bucket not properly configured');
+          }
+          
+          const fileName = pdfFile.name || `notice_${Date.now()}.pdf`;
           imageUrl = await uploadNoticePDF(pdfFile.uri, fileName);
+          console.log('PDF upload successful, URL:', imageUrl);
         } catch (error) {
-          console.log('PDF upload failed, continuing without PDF');
+          console.error('PDF upload failed:', error);
+          Alert.alert(
+            'PDF Upload Failed', 
+            'The notice will be created without the PDF. Please check your Supabase storage configuration.',
+            [{ text: 'Continue' }]
+          );
           imageUrl = undefined;
         }
       }
@@ -100,7 +114,7 @@ const AdminNoticeUpload = () => {
 
       Alert.alert(
         'Success',
-        'Notice uploaded successfully!',
+        imageUrl ? 'Notice uploaded successfully with PDF!' : 'Notice uploaded successfully!',
         [
           {
             text: 'OK',
@@ -239,9 +253,9 @@ const AdminNoticeUpload = () => {
                  {/* PDF Upload */}
          <View style={styles.inputGroup}>
            <Text style={[styles.label, { color: theme.textPrimary }]}>PDF Notice (Optional)</Text>
-           <Text style={[styles.infoText, { color: theme.textTertiary }]}>
-             PDF selection works, but storage is simplified for Expo compatibility.
-           </Text>
+                       <Text style={[styles.infoText, { color: theme.textTertiary }]}>
+              PDFs will be stored in Supabase storage and accessible to all users. Make sure your Supabase storage is properly configured.
+            </Text>
 
           <TouchableOpacity
             style={[styles.pdfUploadButton, { 

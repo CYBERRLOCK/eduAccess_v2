@@ -21,7 +21,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import type { RootStackParamList } from '../App';
 import { useTheme } from '../components/theme-provider';
-import { fetchFacultyNotices, searchFacultyNotices, type FacultyNotice } from '../api/noticesApi';
+import { fetchFacultyNotices, searchFacultyNotices, cleanupOldNotices, deleteFacultyNotice, type FacultyNotice } from '../api/noticesApi';
 
 const { width } = Dimensions.get('window');
 
@@ -57,6 +57,10 @@ const FacultyNotice = () => {
   const loadNotices = async () => {
     try {
       setLoading(true);
+      
+      // Clean up old notices with invalid URLs
+      await cleanupOldNotices();
+      
       const data = await fetchFacultyNotices();
       setNotices(data);
     } catch (error) {
@@ -107,9 +111,44 @@ const FacultyNotice = () => {
     return { day, date: dateStr, time };
   };
 
-  const handlePDFPress = (pdfUrl: string) => {
-    // Open PDF in external browser or PDF viewer
-    Linking.openURL(pdfUrl);
+  const handlePDFPress = async (pdfUrl: string) => {
+    try {
+      console.log('Opening PDF URL:', pdfUrl);
+      
+      // Validate URL
+      if (!pdfUrl || !pdfUrl.startsWith('https://')) {
+        Alert.alert(
+          'Error',
+          'Invalid PDF URL. The PDF may not be available.',
+          [
+            { text: 'OK' }
+          ]
+        );
+        return;
+      }
+
+      // Try to open the PDF
+      const canOpen = await Linking.canOpenURL(pdfUrl);
+      if (canOpen) {
+        await Linking.openURL(pdfUrl);
+        console.log('PDF opened successfully');
+      } else {
+        // If can't open directly, try opening in browser
+        const browserUrl = pdfUrl;
+        await Linking.openURL(browserUrl);
+        console.log('PDF opened in browser');
+      }
+      
+    } catch (error) {
+      console.error('Error opening PDF:', error);
+      Alert.alert(
+        'PDF Viewer',
+        'Unable to open PDF. Please check your internet connection or try again later.',
+        [
+          { text: 'OK' }
+        ]
+      );
+    }
   };
 
   const handleImagePress = (imageUrl: string) => {
@@ -120,6 +159,34 @@ const FacultyNotice = () => {
   const closeImageViewer = () => {
     setImageViewerVisible(false);
     setSelectedImage(null);
+  };
+
+  const handleDeleteNotice = async (noticeId: string, noticeTitle: string) => {
+    Alert.alert(
+      'Delete Notice',
+      `Are you sure you want to delete "${noticeTitle}"? This action cannot be undone.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteFacultyNotice(noticeId);
+              Alert.alert('Success', 'Notice deleted successfully');
+              // Reload notices after deletion
+              loadNotices();
+            } catch (error) {
+              console.error('Error deleting notice:', error);
+              Alert.alert('Error', 'Failed to delete notice. Please try again.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -139,14 +206,21 @@ const FacultyNotice = () => {
             <Text style={[styles.title, { color: theme.textPrimary }]}>Faculty Notice</Text>
             <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Important announcements</Text>
           </View>
-          <TouchableOpacity 
-            style={[styles.uploadButton, { backgroundColor: theme.accentSecondary }]}
-            onPress={() => navigation.navigate('AdminNoticeUpload')}
-          >
-            <Icon name="plus" size={16} color="#fff" />
-          </TouchableOpacity>
+                     <TouchableOpacity 
+             style={[styles.uploadButton, { backgroundColor: theme.accentSecondary }]}
+             onPress={() => navigation.navigate('AdminNoticeUpload')}
+           >
+             <Icon name="plus" size={16} color="#fff" />
+           </TouchableOpacity>
+         </View>
+       </View>
+
+               {/* Delete Hint */}
+        <View style={[styles.deleteHint, { backgroundColor: theme.backgroundColor }]}>
+          <Text style={[styles.deleteHintText, { color: theme.textTertiary }]}>
+            💡 Long press any notice to delete it
+          </Text>
         </View>
-      </View>
 
       {/* Search Section */}
       <View style={[styles.searchSection, { backgroundColor: theme.backgroundColor }]}>
@@ -204,11 +278,12 @@ const FacultyNotice = () => {
           </View>
         ) : (
           filteredNotices.map((notice) => (
-            <TouchableOpacity 
-              key={notice.id} 
-              style={[styles.noticeCard, { backgroundColor: theme.cardColor, shadowColor: theme.shadowColor }]}
-              activeOpacity={0.9}
-            >
+                         <TouchableOpacity 
+               key={notice.id} 
+               style={[styles.noticeCard, { backgroundColor: theme.cardColor, shadowColor: theme.shadowColor }]}
+               activeOpacity={0.9}
+               onLongPress={() => handleDeleteNotice(notice.id, notice.title)}
+             >
               <View style={styles.noticeHeader}>
                 <View style={styles.noticeTitleContainer}>
                   <Text style={[styles.noticeTitle, { color: theme.textPrimary }]}>
@@ -243,9 +318,14 @@ const FacultyNotice = () => {
                 >
                   <View style={styles.pdfCard}>
                     <Icon name="file-pdf-o" size={32} color={theme.accentSecondary} />
-                    <Text style={[styles.pdfText, { color: theme.textPrimary }]}>
-                      View PDF Notice
-                    </Text>
+                    <View style={styles.pdfInfo}>
+                      <Text style={[styles.pdfText, { color: theme.textPrimary }]}>
+                        View PDF Notice
+                      </Text>
+                                             <Text style={[styles.pdfSubtext, { color: theme.textTertiary }]}>
+                         Opens in browser/PDF viewer
+                       </Text>
+                    </View>
                     <Icon name="external-link" size={16} color={theme.textSecondary} />
                   </View>
                 </TouchableOpacity>
@@ -255,19 +335,27 @@ const FacultyNotice = () => {
                 {notice.content}
               </Text>
               
-              <View style={styles.noticeFooter}>
-                <View style={[styles.categoryBadge, { backgroundColor: theme.accentTertiary }]}>
-                  <Text style={[styles.categoryText, { color: theme.textPrimary }]}>
-                    {notice.category}
-                  </Text>
-                </View>
-                <TouchableOpacity style={styles.readMoreButton}>
-                  <Text style={[styles.readMoreText, { color: theme.accentSecondary }]}>
-                    Read More
-                  </Text>
-                  <Icon name="arrow-right" size={12} color={theme.accentSecondary} style={styles.readMoreIcon} />
-                </TouchableOpacity>
-              </View>
+                             <View style={styles.noticeFooter}>
+                 <View style={[styles.categoryBadge, { backgroundColor: theme.accentTertiary }]}>
+                   <Text style={[styles.categoryText, { color: theme.textPrimary }]}>
+                     {notice.category}
+                   </Text>
+                 </View>
+                 <View style={styles.footerActions}>
+                   <TouchableOpacity style={styles.readMoreButton}>
+                     <Text style={[styles.readMoreText, { color: theme.accentSecondary }]}>
+                       Read More
+                     </Text>
+                     <Icon name="arrow-right" size={12} color={theme.accentSecondary} style={styles.readMoreIcon} />
+                   </TouchableOpacity>
+                   <TouchableOpacity 
+                     style={[styles.deleteButton, { backgroundColor: theme.errorColor || '#ff4444' }]}
+                     onPress={() => handleDeleteNotice(notice.id, notice.title)}
+                   >
+                     <Icon name="trash" size={14} color="#fff" />
+                   </TouchableOpacity>
+                 </View>
+               </View>
             </TouchableOpacity>
           ))
         )}
@@ -362,6 +450,15 @@ const styles = StyleSheet.create({
   searchSection: {
     paddingHorizontal: 24,
     paddingVertical: 16,
+  },
+  deleteHint: {
+    paddingHorizontal: 24,
+    paddingVertical: 8,
+  },
+  deleteHintText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
   searchContainer: {
     borderRadius: 12,
@@ -475,6 +572,18 @@ const styles = StyleSheet.create({
   readMoreIcon: {
     marginLeft: 2,
   },
+  footerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  deleteButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   bottomContainer: {
     height: 60,
   },
@@ -523,11 +632,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
     borderRadius: 8,
   },
+  pdfInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
   pdfText: {
     fontSize: 16,
     fontWeight: '600',
-    flex: 1,
-    marginLeft: 12,
+  },
+  pdfSubtext: {
+    fontSize: 12,
+    marginTop: 2,
   },
   imageViewerContainer: {
     flex: 1,
@@ -554,4 +669,5 @@ const styles = StyleSheet.create({
   },
 });
 
+export default FacultyNotice; 
 export default FacultyNotice; 
