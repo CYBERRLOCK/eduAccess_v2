@@ -10,66 +10,22 @@ import {
   StatusBar,
   Image,
   Modal,
-  BackHandler
+  BackHandler,
+  RefreshControl,
+  Alert,
+  ActivityIndicator,
+  Linking
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import type { RootStackParamList } from '../App';
 import { useTheme } from '../components/theme-provider';
+import { fetchFacultyNotices, searchFacultyNotices, type FacultyNotice } from '../api/noticesApi';
 
 const { width } = Dimensions.get('window');
 
 type FacultyNoticeNavigationProp = StackNavigationProp<RootStackParamList, 'FacultyNotice'>;
-
-// Mock data for faculty notices with images
-const mockNotices = [
-  {
-    id: '1',
-    title: 'Faculty Meeting Schedule',
-    content: 'Monthly faculty meeting scheduled for next Friday at 2:00 PM in the main auditorium.',
-    date: '2024-01-15T14:30:00',
-    priority: 'high',
-    category: 'Meeting',
-    image: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=400&h=300&fit=crop'
-  },
-  {
-    id: '2',
-    title: 'Academic Calendar Update',
-    content: 'Updated academic calendar for the current semester. Please review the new schedule.',
-    date: '2024-01-14T09:15:00',
-    priority: 'medium',
-    category: 'Academic',
-    image: 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=400&h=300&fit=crop'
-  },
-  {
-    id: '3',
-    title: 'Research Grant Opportunities',
-    content: 'New research grant opportunities available for faculty members. Deadline: March 1st.',
-    date: '2024-01-13T16:45:00',
-    priority: 'high',
-    category: 'Research',
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop'
-  },
-  {
-    id: '4',
-    title: 'Library Resources Update',
-    content: 'New digital resources added to the library. Access available through the online portal.',
-    date: '2024-01-12T11:20:00',
-    priority: 'low',
-    category: 'Resources',
-    image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop'
-  },
-  {
-    id: '5',
-    title: 'Student Feedback System',
-    content: 'New student feedback system implementation. Training session scheduled for next week.',
-    date: '2024-01-11T13:00:00',
-    priority: 'medium',
-    category: 'System',
-    image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop'
-  }
-];
 
 const FacultyNotice = () => {
   const navigation = useNavigation<FacultyNoticeNavigationProp>();
@@ -77,6 +33,9 @@ const FacultyNotice = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
+  const [notices, setNotices] = useState<FacultyNotice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Handle hardware back button
   useEffect(() => {
@@ -90,11 +49,45 @@ const FacultyNotice = () => {
     return () => backHandler.remove();
   }, [navigation]);
 
-  const filteredNotices = mockNotices.filter(notice => {
-    const matchesSearch = notice.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         notice.content.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  // Load notices on component mount
+  useEffect(() => {
+    loadNotices();
+  }, []);
+
+  const loadNotices = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchFacultyNotices();
+      setNotices(data);
+    } catch (error) {
+      console.error('Error loading notices:', error);
+      Alert.alert('Error', 'Failed to load notices');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadNotices();
+    setRefreshing(false);
+  };
+
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (query.trim()) {
+      try {
+        const searchResults = await searchFacultyNotices(query);
+        setNotices(searchResults);
+      } catch (error) {
+        console.error('Error searching notices:', error);
+      }
+    } else {
+      loadNotices();
+    }
+  };
+
+  const filteredNotices = notices;
 
 
 
@@ -112,6 +105,11 @@ const FacultyNotice = () => {
       hour12: true 
     });
     return { day, date: dateStr, time };
+  };
+
+  const handlePDFPress = (pdfUrl: string) => {
+    // Open PDF in external browser or PDF viewer
+    Linking.openURL(pdfUrl);
   };
 
   const handleImagePress = (imageUrl: string) => {
@@ -141,7 +139,12 @@ const FacultyNotice = () => {
             <Text style={[styles.title, { color: theme.textPrimary }]}>Faculty Notice</Text>
             <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Important announcements</Text>
           </View>
-          <View style={styles.placeholder} />
+          <TouchableOpacity 
+            style={[styles.uploadButton, { backgroundColor: theme.accentSecondary }]}
+            onPress={() => navigation.navigate('AdminNoticeUpload')}
+          >
+            <Icon name="plus" size={16} color="#fff" />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -155,7 +158,7 @@ const FacultyNotice = () => {
               placeholder="Search notices..." 
               placeholderTextColor={theme.textTertiary} 
               value={searchQuery} 
-              onChangeText={setSearchQuery} 
+              onChangeText={handleSearch} 
             />
             {searchQuery ? ( 
               <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearButton}> 
@@ -173,8 +176,23 @@ const FacultyNotice = () => {
         style={styles.content}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme.accentSecondary]}
+            tintColor={theme.accentSecondary}
+          />
+        }
       >
-        {filteredNotices.length === 0 ? (
+        {loading ? (
+          <View style={styles.emptyContainer}>
+            <ActivityIndicator size="large" color={theme.accentSecondary} />
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+              Loading notices...
+            </Text>
+          </View>
+        ) : filteredNotices.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Icon name="bell-slash" size={48} color={theme.textTertiary} />
             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
@@ -199,7 +217,7 @@ const FacultyNotice = () => {
                 </View>
                 <View style={styles.dateTimeContainer}>
                   {(() => {
-                    const dateInfo = formatDate(notice.date);
+                    const dateInfo = formatDate(notice.created_at);
                     return (
                       <>
                         <Text style={[styles.noticeDay, { color: theme.textSecondary }]}>
@@ -217,19 +235,18 @@ const FacultyNotice = () => {
                 </View>
               </View>
               
-              {notice.image && (
+              {notice.pdf_url && (
                 <TouchableOpacity 
-                  style={styles.imageContainer}
-                  onPress={() => handleImagePress(notice.image)}
+                  style={styles.pdfContainer}
+                  onPress={() => handlePDFPress(notice.pdf_url!)}
                   activeOpacity={0.9}
                 >
-                  <Image 
-                    source={{ uri: notice.image }} 
-                    style={styles.noticeImage}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.imageOverlay}>
-                    <Icon name="expand" size={16} color="#fff" />
+                  <View style={styles.pdfCard}>
+                    <Icon name="file-pdf-o" size={32} color={theme.accentSecondary} />
+                    <Text style={[styles.pdfText, { color: theme.textPrimary }]}>
+                      View PDF Notice
+                    </Text>
+                    <Icon name="external-link" size={16} color={theme.textSecondary} />
                   </View>
                 </TouchableOpacity>
               )}
@@ -334,6 +351,13 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 44,
+  },
+  uploadButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   searchSection: {
     paddingHorizontal: 24,
@@ -485,6 +509,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     borderRadius: 12,
     padding: 6,
+  },
+  pdfContainer: {
+    marginVertical: 12,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  pdfCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 8,
+  },
+  pdfText: {
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+    marginLeft: 12,
   },
   imageViewerContainer: {
     flex: 1,

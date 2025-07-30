@@ -14,6 +14,7 @@ import ExamDuty from "./screens/ExamDuty";
 import NotificationScreen from "./screens/NotificationScreen"; // Import NotificationScreen
 import ExamSeatingArrangement from "./screens/ExamSeatingArrangement"; // Import ExamSeatingArrangement screen
 import ProfileScreen from "./screens/ProfileScreen"; // Import ProfileScreen
+import AdminNoticeUpload from "./screens/AdminNoticeUpload"; // Import AdminNoticeUpload
 
 export type RootStackParamList = {
   LoginPage: undefined;
@@ -29,6 +30,7 @@ export type RootStackParamList = {
   ExamDuty: undefined;
   ExamSeatingArrangement: undefined; // Add ExamSeatingArrangement screen
   ProfileScreen: undefined; // Add ProfileScreen
+  AdminNoticeUpload: undefined; // Add AdminNoticeUpload
   // ...other routes...
 };
 
@@ -106,6 +108,11 @@ const App: React.FC = () => {
         <Stack.Screen
           name="ProfileScreen"
           component={ProfileScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="AdminNoticeUpload"
+          component={AdminNoticeUpload}
           options={{ headerShown: false }}
         />
         {/* Add other screens here */}
