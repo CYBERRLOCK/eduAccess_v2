@@ -117,6 +117,15 @@ const LoginPage: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+      {/* Background Image for Dark Theme */}
+      {theme.backgroundImage && (
+        <Image 
+          source={theme.backgroundImage} 
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+      )}
+      
       <Image
         source={{ uri: 'https://i.postimg.cc/JsRJXTkP/Main-Logo.png' }}
         style={styles.logo}
@@ -193,6 +202,15 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#f8f1e4",
     marginBottom: 80
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
   },
  
   logo: {

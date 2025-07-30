@@ -390,6 +390,15 @@ const FacultyDirectory: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+      {/* Background Image for Dark Theme */}
+      {theme.backgroundImage && (
+        <Image 
+          source={theme.backgroundImage} 
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+      )}
+      
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.backgroundColor, borderBottomColor: theme.borderColor }]}>
         <View style={styles.headerContent}>
@@ -508,6 +517,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8f1e4",
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
   },
   header: {
     height: 120,

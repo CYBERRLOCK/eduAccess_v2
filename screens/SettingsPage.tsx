@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from "react-native";
 import supabase from "../supabase"; // Import Supabase client
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../App"; // Fixed import syntax
@@ -8,7 +8,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 
 const SettingsPage: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  const { theme, isDarkMode, toggleTheme } = useTheme();
+  const { theme, themeMode, setThemeMode } = useTheme();
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -21,6 +21,15 @@ const SettingsPage: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+      {/* Background Image for Dark Theme */}
+      {theme.backgroundImage && (
+        <Image 
+          source={theme.backgroundImage} 
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+      )}
+      
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.backgroundColor, borderBottomColor: theme.borderColor }]}>
         <View style={styles.headerContent}>
@@ -38,34 +47,86 @@ const SettingsPage: React.FC = () => {
         </View>
       </View>
 
-      {/* Theme Toggle */}
+      {/* Theme Selection */}
       <View style={[styles.section, { backgroundColor: theme.cardColor }]}>
         <View style={styles.sectionHeader}>
           <Icon name="paint-brush" size={20} color={theme.textPrimary} />
           <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Appearance</Text>
         </View>
+        
+        {/* Classic Theme Option */}
         <TouchableOpacity 
-          style={[styles.toggleButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]}
-          onPress={toggleTheme}
+          style={[styles.themeOption, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]}
+          onPress={() => setThemeMode('classic')}
         >
-          <View style={styles.toggleContent}>
-            <Icon 
-              name={isDarkMode ? "moon-o" : "sun-o"} 
-              size={18} 
-              color={theme.textPrimary} 
-            />
-            <Text style={[styles.toggleText, { color: theme.textPrimary }]}>
-              {isDarkMode ? "Dark Mode" : "Light Mode"}
-            </Text>
+          <View style={styles.themeContent}>
+            <Icon name="tint" size={18} color={theme.textPrimary} />
+            <Text style={[styles.themeText, { color: theme.textPrimary }]}>Classic Theme</Text>
           </View>
-          <View style={[styles.toggleIndicator, { backgroundColor: isDarkMode ? theme.accentPrimary : theme.borderColor }]}>
+          <View style={[styles.themeIndicator, { backgroundColor: themeMode === 'classic' ? theme.accentPrimary : theme.borderColor }]}>
             <Icon 
-              name={isDarkMode ? "check" : ""} 
+              name={themeMode === 'classic' ? "check" : ""} 
               size={12} 
-              color={isDarkMode ? theme.textPrimary : "transparent"} 
+              color={themeMode === 'classic' ? theme.textPrimary : "transparent"} 
             />
           </View>
         </TouchableOpacity>
+
+        {/* Dark Theme Option */}
+        <TouchableOpacity 
+          style={[styles.themeOption, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]}
+          onPress={() => setThemeMode('dark')}
+        >
+          <View style={styles.themeContent}>
+            <Icon name="moon-o" size={18} color={theme.textPrimary} />
+            <Text style={[styles.themeText, { color: theme.textPrimary }]}>Dark Mode</Text>
+          </View>
+          <View style={[styles.themeIndicator, { backgroundColor: themeMode === 'dark' ? theme.accentPrimary : theme.borderColor }]}>
+            <Icon 
+              name={themeMode === 'dark' ? "check" : ""} 
+              size={12} 
+              color={themeMode === 'dark' ? theme.textPrimary : "transparent"} 
+            />
+          </View>
+        </TouchableOpacity>
+
+        {/* Elegant Theme Option */}
+        <TouchableOpacity 
+          style={[styles.themeOption, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]}
+          onPress={() => setThemeMode('warm')}
+        >
+          <View style={styles.themeContent}>
+            <Icon name="sun-o" size={18} color={theme.textPrimary} />
+            <Text style={[styles.themeText, { color: theme.textPrimary }]}>Elegant Mode</Text>
+          </View>
+          <View style={[styles.themeIndicator, { backgroundColor: themeMode === 'warm' ? theme.accentPrimary : theme.borderColor }]}>
+            <Icon 
+              name={themeMode === 'warm' ? "check" : ""} 
+              size={12} 
+              color={themeMode === 'warm' ? theme.textPrimary : "transparent"} 
+            />
+          </View>
+        </TouchableOpacity>
+
+        {/* Green Theme Option */}
+        <TouchableOpacity 
+          style={[styles.themeOption, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]}
+          onPress={() => setThemeMode('green')}
+        >
+          <View style={styles.themeContent}>
+            <Icon name="leaf" size={18} color={theme.textPrimary} />
+            <Text style={[styles.themeText, { color: theme.textPrimary }]}>Green Theme</Text>
+          </View>
+          <View style={[styles.themeIndicator, { backgroundColor: themeMode === 'green' ? theme.accentPrimary : theme.borderColor }]}>
+            <Icon 
+              name={themeMode === 'green' ? "check" : ""} 
+              size={12} 
+              color={themeMode === 'green' ? theme.textPrimary : "transparent"} 
+            />
+          </View>
+        </TouchableOpacity>
+
+
       </View>
 
       {/* Other Settings */}
@@ -104,6 +165,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8f1e4",
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
   },
   header: {
     height: 120,
@@ -175,7 +245,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 12,
   },
-  toggleButton: {
+  themeOption: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -183,17 +253,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.1)',
+    marginBottom: 8,
   },
-  toggleContent: {
+  themeContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  toggleText: {
+  themeText: {
     fontSize: 16,
     fontWeight: '500',
     marginLeft: 12,
   },
-  toggleIndicator: {
+  themeIndicator: {
     width: 24,
     height: 24,
     borderRadius: 12,

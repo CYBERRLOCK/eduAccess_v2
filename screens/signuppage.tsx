@@ -3,9 +3,11 @@ import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity, Ima
 import supabase from "../supabase";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../App";
+import { useTheme } from "../components/theme-provider";
 
 const SignupPage: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const { theme } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -41,6 +43,15 @@ const SignupPage: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      {/* Background Image for Dark Theme */}
+      {theme.backgroundImage && (
+        <Image 
+          source={theme.backgroundImage} 
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+      )}
+      
       <Image
         source={{ uri: 'https://i.postimg.cc/JsRJXTkP/Main-Logo.png' }}
         style={styles.logo}
@@ -76,6 +87,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     backgroundColor: "#f8f1e4",
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
   },
   logo: {
     width: 150,

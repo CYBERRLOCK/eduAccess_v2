@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, ScrollView, Animated } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, ScrollView, Animated, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -117,6 +117,15 @@ const NotificationScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+      {/* Background Image for Dark Theme */}
+      {theme.backgroundImage && (
+        <Image 
+          source={theme.backgroundImage} 
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+      )}
+      
       {/* Gradient Background */}
       <LinearGradient
         colors={[theme.backgroundColor, theme.accentTertiary + '20', theme.backgroundColor]}
@@ -183,6 +192,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: StatusBar.currentHeight || 0,
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
   },
   gradientBackground: {
     position: 'absolute',

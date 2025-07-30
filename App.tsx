@@ -11,7 +11,6 @@ import ContactDetailsScreen from "./screens/ContactDetailsScreen"; // Import Con
 import HallBooking from "./screens/HallBooking";
 import FacultyNotice from "./screens/FacultyNotice";
 import ExamDuty from "./screens/ExamDuty";
-import LeaveRequest from "./screens/LeaveRequest";
 import NotificationScreen from "./screens/NotificationScreen"; // Import NotificationScreen
 import ExamSeatingArrangement from "./screens/ExamSeatingArrangement"; // Import ExamSeatingArrangement screen
 import ProfileScreen from "./screens/ProfileScreen"; // Import ProfileScreen
@@ -28,7 +27,6 @@ export type RootStackParamList = {
   HallBooking: undefined;
   FacultyNotice: undefined;
   ExamDuty: undefined;
-  LeaveRequest: undefined;
   ExamSeatingArrangement: undefined; // Add ExamSeatingArrangement screen
   ProfileScreen: undefined; // Add ProfileScreen
   // ...other routes...
@@ -98,11 +96,6 @@ const App: React.FC = () => {
         <Stack.Screen
           name="ExamDuty"
           component={ExamDuty}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="LeaveRequest"
-          component={LeaveRequest}
           options={{ headerShown: false }}
         />
         <Stack.Screen

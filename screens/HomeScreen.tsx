@@ -82,12 +82,6 @@ const HomeScreen: React.FC = () => {
       screen: 'ExamDuty',
       description: 'Assign exam duties to faculty members'
     },
-    { 
-      title: 'Leave Request', 
-      icon: 'calendar-times-o', 
-      screen: 'LeaveRequest',
-      description: 'Submit and track leave requests'
-    },
   ];
 
   const adminMenuItems: MenuItem[] = [
@@ -112,8 +106,6 @@ const HomeScreen: React.FC = () => {
         navigation.navigate('FacultyNotice');
       } else if (screen === 'ExamDuty') {
         navigation.navigate('ExamDuty');
-      } else if (screen === 'LeaveRequest') {
-        navigation.navigate('LeaveRequest');
       } else if (screen === 'ExamSeatingArrangement') {
         navigation.navigate('ExamSeatingArrangement');
       }
@@ -156,6 +148,15 @@ const HomeScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+      {/* Background Image for Dark Theme */}
+      {theme.backgroundImage && (
+        <Image 
+          source={theme.backgroundImage} 
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+      )}
+      
       <StatusBar barStyle="dark-content" backgroundColor="#f8f1e4" />
       
       {/* Header */}
@@ -207,6 +208,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: StatusBar.currentHeight || 0,
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
   },
   header: {
     paddingHorizontal: 32,
