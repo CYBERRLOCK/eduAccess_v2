@@ -1,7 +1,7 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from "react-native";
+import React, { useCallback } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Image, BackHandler } from "react-native";
 import supabase from "../supabase"; // Import Supabase client
-import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { useNavigation, NavigationProp, useFocusEffect } from "@react-navigation/native";
 import type { RootStackParamList } from "../App"; // Fixed import syntax
 import { useTheme } from "../components/theme-provider";
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -9,6 +9,19 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 const SettingsPage: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { theme, themeMode, setThemeMode } = useTheme();
+
+  // Back button logic to navigate back to MainScreen
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate('MainScreen');
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [navigation])
+  );
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,9 @@ import {
   Alert,
   StatusBar,
   Animated,
+  BackHandler,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -80,6 +81,19 @@ const ExamDuty: React.FC = () => {
       })
     ]).start();
   }, []);
+
+  // Back button logic to navigate back to MainScreen
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate('MainScreen');
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [navigation])
+  );
 
   const filteredDuties = examDuties.filter(duty => 
     selectedFilter === 'all' ? true : duty.status === selectedFilter

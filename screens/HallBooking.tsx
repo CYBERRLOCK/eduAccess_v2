@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { useTheme } from '../components/theme-provider';
 import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../App';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -50,14 +52,14 @@ interface BookingRequest {
 
 const HallBooking: React.FC = () => {
   const { theme } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [isAdmin, setIsAdmin] = useState(false); // Toggle for admin view
   const [activeTab, setActiveTab] = useState<'book' | 'requests' | 'admin'>('book');
 
   // Handle hardware back button
   useEffect(() => {
     const backAction = () => {
-      navigation.goBack();
+      navigation.navigate('MainScreen');
       return true;
     };
 
