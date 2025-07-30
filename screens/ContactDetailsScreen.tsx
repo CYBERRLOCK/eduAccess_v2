@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Linking, TextInput, Modal } from "react-native";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import React, { useState, useCallback } from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Linking, TextInput, Modal, BackHandler } from "react-native";
+import { useRoute, useNavigation, useFocusEffect } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../App";
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -15,6 +15,19 @@ const ContactDetails: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [photoViewerVisible, setPhotoViewerVisible] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<{ url: string; name: string } | null>(null);
+
+  // Back button logic to navigate back to FacultyDirectory
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate('FacultyDirectory');
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [navigation])
+  );
 
   const handleCall = (phone: string) => {
     Linking.openURL(`tel:${phone}`);

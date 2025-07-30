@@ -81,7 +81,7 @@ const FacultyNotice = () => {
   // Handle hardware back button
   useEffect(() => {
     const backAction = () => {
-      navigation.goBack();
+      navigation.navigate('MainScreen');
       return true;
     };
 

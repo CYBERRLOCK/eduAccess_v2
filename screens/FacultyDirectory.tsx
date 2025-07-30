@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, Image, RefreshControl, Modal, ScrollView, Animated } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, Image, RefreshControl, Modal, ScrollView, Animated, BackHandler } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from 'react-native-vector-icons/FontAwesome'; // Import FontAwesome icons
 import { StackNavigationProp } from '@react-navigation/stack'; // Import StackNavigationProp
@@ -85,6 +85,19 @@ const FacultyDirectory: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Back button logic to navigate back to MainScreen
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate('MainScreen');
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [navigation])
+  );
 
 
 

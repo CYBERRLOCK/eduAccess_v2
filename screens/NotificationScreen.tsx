@@ -1,14 +1,12 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, ScrollView, Animated, Image } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import React, { useState, useCallback } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, ScrollView, Animated, Image, BackHandler } from "react-native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { StackNavigationProp } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useTheme } from "../components/theme-provider";
 import { LinearGradient } from 'expo-linear-gradient';
 
-type RootStackParamList = {
-  HomePage: undefined;
-};
+import type { RootStackParamList } from "../App";
 
 interface Notification {
   id: string;
@@ -22,6 +20,19 @@ interface Notification {
 const NotificationScreen: React.FC = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { theme } = useTheme();
+
+  // Back button logic to navigate back to MainScreen
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate('MainScreen');
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [navigation])
+  );
   const [notifications, setNotifications] = useState<Notification[]>([
     // Sample notifications to demonstrate the design
     {
