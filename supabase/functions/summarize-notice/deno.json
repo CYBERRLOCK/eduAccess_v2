@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
+    "pdf-parse": "https://esm.sh/pdf-parse@1.1.1"
+  },
+  "tasks": {
+    "start": "deno run --allow-net --allow-env index.ts"
+  }
+} 

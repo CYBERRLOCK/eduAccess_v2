@@ -18,7 +18,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import * as DocumentPicker from 'expo-document-picker';
 import type { RootStackParamList } from '../App';
 import { useTheme } from '../components/theme-provider';
-import { createFacultyNotice, uploadNoticePDF, verifyStorageSetup, type FacultyNotice } from '../api/noticesApi';
+import { createFacultyNotice, uploadNoticePDF, verifyStorageSetup, generateNoticeSummary, type FacultyNotice } from '../api/noticesApi';
 
 type AdminNoticeUploadNavigationProp = StackNavigationProp<RootStackParamList, 'AdminNoticeUpload'>;
 
@@ -26,6 +26,7 @@ const AdminNoticeUpload = () => {
   const navigation = useNavigation<AdminNoticeUploadNavigationProp>();
   const { theme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [selectedPDF, setSelectedPDF] = useState<string | null>(null);
   const [pdfFile, setPdfFile] = useState<{ uri: string; name: string } | null>(null);
 
@@ -35,7 +36,7 @@ const AdminNoticeUpload = () => {
     content: '',
     category: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
-    created_by: 'Admin' // This would come from user authentication
+    posted_by: 'Admin' // This would come from user authentication
   });
 
   const categories = ['Meeting', 'Academic', 'Research', 'Resources', 'System', 'General'];
@@ -77,7 +78,7 @@ const AdminNoticeUpload = () => {
     setIsLoading(true);
 
     try {
-      let imageUrl = undefined;
+      let pdfUrl = undefined;
 
       // Upload PDF if selected
       if (pdfFile) {
@@ -91,8 +92,8 @@ const AdminNoticeUpload = () => {
           }
           
           const fileName = pdfFile.name || `notice_${Date.now()}.pdf`;
-          imageUrl = await uploadNoticePDF(pdfFile.uri, fileName);
-          console.log('PDF upload successful, URL:', imageUrl);
+          pdfUrl = await uploadNoticePDF(pdfFile.uri, fileName);
+          console.log('PDF upload successful, URL:', pdfUrl);
         } catch (error) {
           console.error('PDF upload failed:', error);
           Alert.alert(
@@ -100,21 +101,43 @@ const AdminNoticeUpload = () => {
             'The notice will be created without the PDF. Please check your Supabase storage configuration.',
             [{ text: 'Continue' }]
           );
-          imageUrl = undefined;
+          pdfUrl = undefined;
         }
       }
 
       // Create notice
       const noticeData = {
         ...formData,
-        pdf_url: imageUrl,
+        pdf_url: pdfUrl,
       };
 
-      await createFacultyNotice(noticeData);
+      const createdNotice = await createFacultyNotice(noticeData);
+
+      // Generate AI summary if PDF was uploaded
+      if (pdfUrl && createdNotice) {
+        try {
+          setIsGeneratingSummary(true);
+          console.log('Generating AI summary for the notice...');
+          
+          await generateNoticeSummary(pdfUrl, createdNotice.id);
+          
+          console.log('AI summary generated successfully');
+        } catch (summaryError) {
+          console.error('Error generating summary:', summaryError);
+          // Don't fail the upload if summary generation fails
+          Alert.alert(
+            'Notice Uploaded',
+            'Notice uploaded successfully! AI summary generation failed, but the notice is available.',
+            [{ text: 'OK' }]
+          );
+        } finally {
+          setIsGeneratingSummary(false);
+        }
+      }
 
       Alert.alert(
         'Success',
-        imageUrl ? 'Notice uploaded successfully with PDF!' : 'Notice uploaded successfully!',
+        pdfUrl ? 'Notice uploaded successfully with PDF and AI summary!' : 'Notice uploaded successfully!',
         [
           {
             text: 'OK',
@@ -298,15 +321,20 @@ const AdminNoticeUpload = () => {
           style={[
             styles.submitButton,
             { 
-              backgroundColor: isLoading ? theme.textTertiary : theme.accentSecondary,
-              opacity: isLoading ? 0.7 : 1
+              backgroundColor: (isLoading || isGeneratingSummary) ? theme.textTertiary : theme.accentSecondary,
+              opacity: (isLoading || isGeneratingSummary) ? 0.7 : 1
             }
           ]}
           onPress={handleSubmit}
-          disabled={isLoading}
+          disabled={isLoading || isGeneratingSummary}
         >
           {isLoading ? (
             <ActivityIndicator color="#fff" size="small" />
+          ) : isGeneratingSummary ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color="#fff" size="small" />
+              <Text style={styles.submitButtonText}>Generating AI Summary...</Text>
+            </View>
           ) : (
             <Text style={styles.submitButtonText}>Upload Notice</Text>
           )}
@@ -485,6 +513,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
     marginBottom: 8,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 
 });

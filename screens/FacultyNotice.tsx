@@ -93,8 +93,6 @@ const FacultyNotice = () => {
 
   const filteredNotices = notices;
 
-
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const day = date.toLocaleDateString('en-US', { weekday: 'long' });
@@ -127,16 +125,19 @@ const FacultyNotice = () => {
         return;
       }
 
-      // Try to open the PDF
-      const canOpen = await Linking.canOpenURL(pdfUrl);
-      if (canOpen) {
-        await Linking.openURL(pdfUrl);
-        console.log('PDF opened successfully');
-      } else {
-        // If can't open directly, try opening in browser
-        const browserUrl = pdfUrl;
-        await Linking.openURL(browserUrl);
-        console.log('PDF opened in browser');
+      // Open PDF directly in browser
+      try {
+        const canOpen = await Linking.canOpenURL(pdfUrl);
+        if (canOpen) {
+          await Linking.openURL(pdfUrl);
+          console.log('PDF opened in browser');
+        } else {
+          await Linking.openURL(pdfUrl);
+          console.log('PDF opened in external app');
+        }
+      } catch (error) {
+        console.error('Error opening PDF in browser:', error);
+        Alert.alert('Error', 'Unable to open PDF in browser');
       }
       
     } catch (error) {
@@ -150,6 +151,8 @@ const FacultyNotice = () => {
       );
     }
   };
+
+
 
   const handleImagePress = (imageUrl: string) => {
     setSelectedImage(imageUrl);
@@ -215,12 +218,7 @@ const FacultyNotice = () => {
          </View>
        </View>
 
-               {/* Delete Hint */}
-        <View style={[styles.deleteHint, { backgroundColor: theme.backgroundColor }]}>
-          <Text style={[styles.deleteHintText, { color: theme.textTertiary }]}>
-            💡 Long press any notice to delete it
-          </Text>
-        </View>
+
 
       {/* Search Section */}
       <View style={[styles.searchSection, { backgroundColor: theme.backgroundColor }]}>
@@ -322,9 +320,9 @@ const FacultyNotice = () => {
                       <Text style={[styles.pdfText, { color: theme.textPrimary }]}>
                         View PDF Notice
                       </Text>
-                                             <Text style={[styles.pdfSubtext, { color: theme.textTertiary }]}>
-                         Opens in browser/PDF viewer
-                       </Text>
+                      <Text style={[styles.pdfSubtext, { color: theme.textTertiary }]}>
+                        Tap to open in browser
+                      </Text>
                     </View>
                     <Icon name="external-link" size={16} color={theme.textSecondary} />
                   </View>
@@ -334,6 +332,21 @@ const FacultyNotice = () => {
               <Text style={[styles.noticeContent, { color: theme.textSecondary }]}>
                 {notice.content}
               </Text>
+              
+              {/* AI Summary Section */}
+              {notice.summary && (
+                <View style={[styles.summaryContainer, { backgroundColor: theme.accentTertiary }]}>
+                  <View style={styles.summaryHeader}>
+                    <Icon name="robot" size={16} color={theme.accentSecondary} />
+                    <Text style={[styles.summaryTitle, { color: theme.textPrimary }]}>
+                      AI Summary
+                    </Text>
+                  </View>
+                  <Text style={[styles.summaryText, { color: theme.textSecondary }]}>
+                    {notice.summary}
+                  </Text>
+                </View>
+              )}
               
                              <View style={styles.noticeFooter}>
                  <View style={[styles.categoryBadge, { backgroundColor: theme.accentTertiary }]}>
@@ -349,7 +362,7 @@ const FacultyNotice = () => {
                      <Icon name="arrow-right" size={12} color={theme.accentSecondary} style={styles.readMoreIcon} />
                    </TouchableOpacity>
                    <TouchableOpacity 
-                     style={[styles.deleteButton, { backgroundColor: theme.errorColor || '#ff4444' }]}
+                     style={[styles.deleteButton, { backgroundColor: theme.error }]}
                      onPress={() => handleDeleteNotice(notice.id, notice.title)}
                    >
                      <Icon name="trash" size={14} color="#fff" />
@@ -389,6 +402,8 @@ const FacultyNotice = () => {
           )}
         </View>
       </Modal>
+
+
     </View>
   );
 };
@@ -451,15 +466,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
   },
-  deleteHint: {
-    paddingHorizontal: 24,
-    paddingVertical: 8,
-  },
-  deleteHintText: {
-    fontSize: 12,
-    fontStyle: 'italic',
-    textAlign: 'center',
-  },
+
   searchContainer: {
     borderRadius: 12,
     elevation: 2,
@@ -667,7 +674,28 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  summaryContainer: {
+    marginVertical: 12,
+    padding: 16,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: 'rgba(59, 130, 246, 0.3)',
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+  summaryTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  summaryText: {
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 20,
+  },
 });
 
-export default FacultyNotice; 
 export default FacultyNotice; 

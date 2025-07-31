@@ -7,9 +7,10 @@ export interface FacultyNotice {
   category: string;
   priority: 'low' | 'medium' | 'high';
   pdf_url?: string; // This will store the Supabase public URL
+  summary?: string; // AI-generated summary of PDF content
+  posted_by?: string; // User who posted the notice
   created_at: string;
   updated_at: string;
-  created_by: string;
 }
 
 // Fetch all faculty notices
@@ -59,7 +60,7 @@ export const searchFacultyNotices = async (query: string): Promise<FacultyNotice
     const { data, error } = await supabase
       .from('faculty_notices')
       .select('*')
-      .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
+      .or(`title.ilike.%${query}%,content.ilike.%${query}%,summary.ilike.%${query}%`)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -81,21 +82,52 @@ export const uploadNoticePDF = async (pdfUri: string, fileName: string): Promise
     console.log('File URI:', pdfUri);
     console.log('File Name:', fileName);
     
+    // Validate input
+    if (!pdfUri || !fileName) {
+      throw new Error('Invalid PDF URI or filename');
+    }
+    
     // Fetch the file data from the URI
     const response = await fetch(pdfUri);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+    }
+    
     const blob = await response.blob();
     
-    // Convert blob to array buffer
-    const arrayBuffer = await blob.arrayBuffer();
+    // Validate blob
+    if (blob.size === 0) {
+      throw new Error('PDF file is empty');
+    }
+    
+    if (blob.type !== 'application/pdf') {
+      console.warn('File type is not PDF, but continuing upload:', blob.type);
+    }
+    
+    // Convert blob to array buffer using FileReader for React Native compatibility
+    const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result instanceof ArrayBuffer) {
+          resolve(reader.result);
+        } else {
+          reject(new Error('Failed to convert blob to ArrayBuffer'));
+        }
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsArrayBuffer(blob);
+    });
+    
     const bytes = new Uint8Array(arrayBuffer);
     
     // Create a unique filename to avoid conflicts
-    const uniqueFileName = `${Date.now()}_${fileName}`;
+    const uniqueFileName = `${Date.now()}_${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
     const filePath = `notices/${uniqueFileName}`;
     
     console.log('Uploading to path:', filePath);
+    console.log('File size:', bytes.length, 'bytes');
     
-    // Upload to Supabase storage
+    // Upload to Supabase storage with proper content-type
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('notices')
       .upload(filePath, bytes, {
@@ -106,7 +138,7 @@ export const uploadNoticePDF = async (pdfUri: string, fileName: string): Promise
 
     if (uploadError) {
       console.error('Error uploading PDF to Supabase:', uploadError);
-      throw uploadError;
+      throw new Error(`Upload failed: ${uploadError.message}`);
     }
 
     console.log('Upload successful:', uploadData);
@@ -199,5 +231,35 @@ export const verifyStorageSetup = async (): Promise<boolean> => {
   } catch (error) {
     console.error('Error verifying storage setup:', error);
     return false;
+  }
+};
+
+// Generate AI summary for PDF notice
+export const generateNoticeSummary = async (pdfUrl: string, noticeId: string): Promise<string> => {
+  try {
+    console.log('Generating summary for PDF:', pdfUrl);
+    
+    const { data, error } = await supabase.functions.invoke('summarize-notice', {
+      body: {
+        pdfUrl: pdfUrl,
+        noticeId: noticeId
+      }
+    });
+
+    if (error) {
+      console.error('Error calling summarize-notice function:', error);
+      throw error;
+    }
+
+    if (!data || !data.success) {
+      throw new Error(data?.error || 'Failed to generate summary');
+    }
+
+    console.log('Summary generated successfully:', data.summary);
+    return data.summary;
+    
+  } catch (error) {
+    console.error('Error in generateNoticeSummary:', error);
+    throw error;
   }
 }; 
