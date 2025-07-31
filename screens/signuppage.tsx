@@ -1,5 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity, Image, BackHandler } from "react-native";
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  Button, 
+  Alert, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Image, 
+  BackHandler,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  ScrollView
+} from "react-native";
 import supabase from "../supabase";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../App";
@@ -42,51 +57,89 @@ const SignupPage: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Background Image for Dark Theme */}
-      {theme.backgroundImage && (
-        <Image 
-          source={theme.backgroundImage} 
-          style={styles.backgroundImage}
-          resizeMode="cover"
-        />
-      )}
-      
-      <Image
-        source={{ uri: 'https://i.postimg.cc/JsRJXTkP/Main-Logo.png' }}
-        style={styles.logo}
-      />
-      <Text style={styles.title}>Register with your Organization Email:</Text>
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        placeholder="example@sjcetpalai.ac.in"
-      />
-      <TextInput
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        placeholder="Password"
-      />
-      <Button title="Register" onPress={handleSignup} />
-      <TouchableOpacity onPress={() => navigation.navigate("LoginPage" as never)}>
-        <Text style={styles.link}>Already have an account? Login</Text>
-      </TouchableOpacity>
-    </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+          {/* Background Image for Dark Theme */}
+          {theme.backgroundImage && (
+            <Image 
+              source={theme.backgroundImage} 
+              style={styles.backgroundImage}
+              resizeMode="cover"
+            />
+          )}
+          
+          <ScrollView 
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Image
+              source={{ uri: 'https://i.postimg.cc/JsRJXTkP/Main-Logo.png' }}
+              style={styles.logo}
+            />
+            <Text style={[styles.title, { color: theme.textPrimary }]}>Register with your Organization Email:</Text>
+            
+            <TextInput
+              style={[styles.input, { 
+                borderColor: theme.borderColor, 
+                backgroundColor: theme.surfaceColor,
+                color: theme.textPrimary 
+              }]}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              placeholder="example@sjcetpalai.ac.in"
+              placeholderTextColor={theme.textTertiary}
+            />
+            
+            <TextInput
+              style={[styles.input, { 
+                borderColor: theme.borderColor, 
+                backgroundColor: theme.surfaceColor,
+                color: theme.textPrimary 
+              }]}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              placeholder="Password"
+              placeholderTextColor={theme.textTertiary}
+            />
+            
+            <TouchableOpacity 
+              style={[styles.registerButton, { backgroundColor: '#007bff' }]}
+              onPress={handleSignup}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.registerButtonText, { color: '#ffffff' }]}>Register</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress={() => navigation.navigate("LoginPage" as never)}>
+              <Text style={[styles.link, { color: '#007bff' }]}>Already have an account? Login</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f8f1e4",
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
-    backgroundColor: "#f8f1e4",
+    paddingBottom: 40,
   },
   backgroundImage: {
     position: 'absolute',
@@ -106,6 +159,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 20,
+    textAlign: 'center',
   },
   input: {
     width: "100%",
@@ -116,6 +170,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 20,
     backgroundColor: "#fff",
+  },
+  registerButton: {
+    width: "100%",
+    height: 50,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  registerButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
   link: {
     marginTop: 20,

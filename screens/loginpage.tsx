@@ -14,7 +14,12 @@ import {
   TouchableOpacity,
   Image,
   BackHandler,
-  Pressable
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  ScrollView
 } from "react-native";
 import supabase from "../supabase";
 import { useNavigation } from "@react-navigation/native";
@@ -30,7 +35,6 @@ const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-
 
   useEffect(() => {
     const backAction = () => {
@@ -50,8 +54,6 @@ const LoginPage: React.FC = () => {
       Alert.alert("Error", "Only @sjcetpalai.ac.in emails are allowed.");
       return;
     }
-
-
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -116,92 +118,111 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
-      {/* Background Image for Dark Theme */}
-      {theme.backgroundImage && (
-        <Image 
-          source={theme.backgroundImage} 
-          style={styles.backgroundImage}
-          resizeMode="cover"
-        />
-      )}
-      
-      <Image
-        source={{ uri: 'https://i.postimg.cc/JsRJXTkP/Main-Logo.png' }}
-        style={styles.logo}
-      />
-      <Text style={[styles.title, { color: theme.textPrimary }]}>Login with your Organization Email:</Text>
-      
-      <TextInput
-        style={[styles.input, { 
-          borderColor: theme.borderColor, 
-          backgroundColor: theme.surfaceColor,
-          color: theme.textPrimary 
-        }]}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        placeholder="example@sjcetpalai.ac.in"
-        placeholderTextColor={theme.textTertiary}
-      />
-      <TextInput
-        style={[styles.input, { 
-          borderColor: theme.borderColor, 
-          backgroundColor: theme.surfaceColor,
-          color: theme.textPrimary 
-        }]}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        placeholder="Password"
-        placeholderTextColor={theme.textTertiary}
-      />
-      
-      {/* Forgot Password Link */}
-      <TouchableOpacity 
-        style={styles.forgotPasswordContainer}
-        onPress={handleForgotPassword}
-      >
-        <Text style={[styles.forgotPasswordText, { color: '#007bff' }]}>Forgot Password?</Text>
-      </TouchableOpacity>
-      
-      {/* Remember Me Checkbox */}
-      <View style={styles.rememberMeContainer}>
-        <Pressable
-          style={styles.checkbox}
-          onPress={() => setRememberMe(!rememberMe)}
-        >
-          <View style={[
-            styles.checkboxBox, 
-            { borderColor: '#007bff' },
-            rememberMe && { backgroundColor: '#007bff' }
-          ]} />
-        </Pressable>
-        <Text style={[styles.rememberMeText, { color: theme.textPrimary }]}>Remember Me</Text>
-      </View>
-      <TouchableOpacity 
-        style={[styles.loginButton, { backgroundColor: '#007bff' }]}
-        onPress={handleLogin}
-        activeOpacity={0.8}
-      >
-        <Text style={[styles.loginButtonText, { color: '#ffffff' }]}>Login</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate("SignupPage")}>
-        <Text style={[styles.link, { color: '#007bff' }]}>Don't have an account? Sign up</Text>
-      </TouchableOpacity>
-    </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+          {/* Background Image for Dark Theme */}
+          {theme.backgroundImage && (
+            <Image 
+              source={theme.backgroundImage} 
+              style={styles.backgroundImage}
+              resizeMode="cover"
+            />
+          )}
+          
+          <ScrollView 
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Image
+              source={{ uri: 'https://i.postimg.cc/JsRJXTkP/Main-Logo.png' }}
+              style={styles.logo}
+            />
+            <Text style={[styles.title, { color: theme.textPrimary }]}>Login with your Organization Email:</Text>
+            
+            <TextInput
+              style={[styles.input, { 
+                borderColor: theme.borderColor, 
+                backgroundColor: theme.surfaceColor,
+                color: theme.textPrimary 
+              }]}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              placeholder="example@sjcetpalai.ac.in"
+              placeholderTextColor={theme.textTertiary}
+            />
+            <TextInput
+              style={[styles.input, { 
+                borderColor: theme.borderColor, 
+                backgroundColor: theme.surfaceColor,
+                color: theme.textPrimary 
+              }]}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              placeholder="Password"
+              placeholderTextColor={theme.textTertiary}
+            />
+            
+            {/* Forgot Password Link */}
+            <TouchableOpacity 
+              style={styles.forgotPasswordContainer}
+              onPress={handleForgotPassword}
+            >
+              <Text style={[styles.forgotPasswordText, { color: '#007bff' }]}>Forgot Password?</Text>
+            </TouchableOpacity>
+            
+            {/* Remember Me Checkbox */}
+            <View style={styles.rememberMeContainer}>
+              <Pressable
+                style={styles.checkbox}
+                onPress={() => setRememberMe(!rememberMe)}
+              >
+                <View style={[
+                  styles.checkboxBox, 
+                  { borderColor: '#007bff' },
+                  rememberMe && { backgroundColor: '#007bff' }
+                ]} />
+              </Pressable>
+              <Text style={[styles.rememberMeText, { color: theme.textPrimary }]}>Remember Me</Text>
+            </View>
+            
+            <TouchableOpacity 
+              style={[styles.loginButton, { backgroundColor: '#007bff' }]}
+              onPress={handleLogin}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.loginButtonText, { color: '#ffffff' }]}>Login</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress={() => navigation.navigate("SignupPage")}>
+              <Text style={[styles.link, { color: '#007bff' }]}>Don't have an account? Sign up</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f8f1e4",
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
-    backgroundColor: "#f8f1e4",
-    marginBottom: 80
+    paddingBottom: 40,
   },
   backgroundImage: {
     position: 'absolute',
@@ -212,7 +233,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
- 
   logo: {
     width: 150,
     height: 150,
@@ -222,6 +242,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 20,
+    textAlign: 'center',
   },
   input: {
     width: "100%",
