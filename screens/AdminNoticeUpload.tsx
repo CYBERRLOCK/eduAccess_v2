@@ -33,7 +33,6 @@ const AdminNoticeUpload = () => {
   // Form state
   const [formData, setFormData] = useState({
     title: '',
-    content: '',
     category: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
     posted_by: 'Admin' // This would come from user authentication
@@ -70,7 +69,7 @@ const AdminNoticeUpload = () => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.title.trim() || !formData.content.trim() || !formData.category.trim()) {
+    if (!formData.title.trim() || !formData.category.trim()) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
@@ -108,6 +107,7 @@ const AdminNoticeUpload = () => {
       // Create notice
       const noticeData = {
         ...formData,
+        content: '', // Default empty content since we removed the content input
         pdf_url: pdfUrl,
       };
 
@@ -196,24 +196,7 @@ const AdminNoticeUpload = () => {
           />
         </View>
 
-        {/* Content Input */}
-        <View style={styles.inputGroup}>
-          <Text style={[styles.label, { color: theme.textPrimary }]}>Content *</Text>
-          <TextInput
-            style={[styles.textArea, { 
-              backgroundColor: theme.surfaceColor, 
-              color: theme.textPrimary,
-              borderColor: theme.borderLight 
-            }]}
-            placeholder="Enter notice content"
-            placeholderTextColor={theme.textTertiary}
-            value={formData.content}
-            onChangeText={(text) => setFormData({ ...formData, content: text })}
-            multiline
-            numberOfLines={6}
-            textAlignVertical="top"
-          />
-        </View>
+
 
         {/* Category Input */}
         <View style={styles.inputGroup}>
@@ -412,14 +395,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1,
   },
-  textArea: {
-    height: 120,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    borderWidth: 1,
-  },
+
   categoryContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',

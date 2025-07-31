@@ -205,16 +205,33 @@ const FacultyNotice = () => {
           >
             <Icon name="arrow-left" size={20} color={theme.textPrimary} />
           </TouchableOpacity>
-          <View style={styles.titleContainer}>
-            <Text style={[styles.title, { color: theme.textPrimary }]}>Faculty Notice</Text>
-            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Important announcements</Text>
-          </View>
-                     <TouchableOpacity 
-             style={[styles.uploadButton, { backgroundColor: theme.accentSecondary }]}
-             onPress={() => navigation.navigate('AdminNoticeUpload')}
-           >
-             <Icon name="plus" size={16} color="#fff" />
-           </TouchableOpacity>
+                     <View style={styles.titleContainer}>
+             <Text style={[styles.title, { color: theme.textPrimary }]}>Faculty Notice</Text>
+             <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Important announcements</Text>
+           </View>
+           <View style={styles.headerActions}>
+             <TouchableOpacity 
+               style={[styles.refreshButton, { 
+                 backgroundColor: theme.surfaceColor, 
+                 borderColor: theme.borderLight,
+                 opacity: refreshing ? 0.7 : 1
+               }]}
+               onPress={onRefresh}
+               disabled={refreshing}
+             >
+               {refreshing ? (
+                 <ActivityIndicator size="small" color={theme.textPrimary} />
+               ) : (
+                 <Icon name="refresh" size={16} color={theme.textPrimary} />
+               )}
+             </TouchableOpacity>
+             <TouchableOpacity 
+               style={[styles.uploadButton, { backgroundColor: theme.accentSecondary }]}
+               onPress={() => navigation.navigate('AdminNoticeUpload')}
+             >
+               <Icon name="plus" size={16} color="#fff" />
+             </TouchableOpacity>
+           </View>
          </View>
        </View>
 
@@ -308,67 +325,72 @@ const FacultyNotice = () => {
                 </View>
               </View>
               
-              {notice.pdf_url && (
-                <TouchableOpacity 
-                  style={styles.pdfContainer}
-                  onPress={() => handlePDFPress(notice.pdf_url!)}
-                  activeOpacity={0.9}
-                >
-                  <View style={styles.pdfCard}>
-                    <Icon name="file-pdf-o" size={32} color={theme.accentSecondary} />
-                    <View style={styles.pdfInfo}>
-                      <Text style={[styles.pdfText, { color: theme.textPrimary }]}>
-                        View PDF Notice
-                      </Text>
-                      <Text style={[styles.pdfSubtext, { color: theme.textTertiary }]}>
-                        Tap to open in browser
-                      </Text>
-                    </View>
-                    <Icon name="external-link" size={16} color={theme.textSecondary} />
-                  </View>
-                </TouchableOpacity>
-              )}
-              
-              <Text style={[styles.noticeContent, { color: theme.textSecondary }]}>
-                {notice.content}
-              </Text>
-              
-              {/* AI Summary Section */}
-              {notice.summary && (
-                <View style={[styles.summaryContainer, { backgroundColor: theme.accentTertiary }]}>
-                  <View style={styles.summaryHeader}>
-                    <Icon name="robot" size={16} color={theme.accentSecondary} />
-                    <Text style={[styles.summaryTitle, { color: theme.textPrimary }]}>
-                      AI Summary
-                    </Text>
-                  </View>
-                  <Text style={[styles.summaryText, { color: theme.textSecondary }]}>
-                    {notice.summary}
-                  </Text>
-                </View>
-              )}
-              
-                             <View style={styles.noticeFooter}>
-                 <View style={[styles.categoryBadge, { backgroundColor: theme.accentTertiary }]}>
-                   <Text style={[styles.categoryText, { color: theme.textPrimary }]}>
-                     {notice.category}
+                             <Text style={[styles.noticeContent, { color: theme.textSecondary }]}>
+                 {notice.content}
+               </Text>
+               
+               {/* AI Summary Section */}
+               {notice.summary && (
+                 <View style={[styles.summaryContainer, { backgroundColor: theme.accentTertiary }]}>
+                   <View style={styles.summaryHeader}>
+                     <Icon name="magic" size={16} color={theme.accentSecondary} />
+                     <Text style={[styles.summaryTitle, { color: theme.textPrimary }]}>
+                       AI Summary
+                     </Text>
+                   </View>
+                   <Text style={[styles.summaryText, { color: theme.textSecondary }]}>
+                     {notice.summary}
                    </Text>
                  </View>
-                 <View style={styles.footerActions}>
-                   <TouchableOpacity style={styles.readMoreButton}>
-                     <Text style={[styles.readMoreText, { color: theme.accentSecondary }]}>
-                       Read More
-                     </Text>
-                     <Icon name="arrow-right" size={12} color={theme.accentSecondary} style={styles.readMoreIcon} />
-                   </TouchableOpacity>
-                   <TouchableOpacity 
-                     style={[styles.deleteButton, { backgroundColor: theme.error }]}
-                     onPress={() => handleDeleteNotice(notice.id, notice.title)}
-                   >
-                     <Icon name="trash" size={14} color="#fff" />
-                   </TouchableOpacity>
-                 </View>
-               </View>
+               )}
+               
+               {/* PDF Notice Section - Moved below AI Summary */}
+               {notice.pdf_url && (
+                 <TouchableOpacity 
+                   style={styles.pdfContainer}
+                   onPress={() => handlePDFPress(notice.pdf_url!)}
+                   activeOpacity={0.9}
+                 >
+                   <View style={styles.pdfCard}>
+                     <Icon name="file-pdf-o" size={32} color={theme.accentSecondary} />
+                     <View style={styles.pdfInfo}>
+                       <Text style={[styles.pdfText, { color: theme.textPrimary }]}>
+                         View PDF Notice
+                       </Text>
+                       <Text style={[styles.pdfSubtext, { color: theme.textTertiary }]}>
+                         Tap to open in browser
+                       </Text>
+                     </View>
+                     <Icon name="external-link" size={16} color={theme.textSecondary} />
+                   </View>
+                 </TouchableOpacity>
+               )}
+              
+                                                           <View style={styles.noticeFooter}>
+                  <View style={styles.footerLeft}>
+                    <View style={[styles.categoryBadge, { backgroundColor: theme.accentTertiary }]}>
+                      <Text style={[styles.categoryText, { color: theme.textPrimary }]}>
+                        {notice.category}
+                      </Text>
+                    </View>
+                    <View style={[styles.priorityBadge, { 
+                      backgroundColor: notice.priority === 'high' ? '#ff6b6b' : 
+                                   notice.priority === 'medium' ? '#ffd93d' : '#6bcf7f'
+                    }]}>
+                      <Text style={[styles.priorityText, { color: '#fff' }]}>
+                        {notice.priority.toUpperCase()}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.footerActions}>
+                    <TouchableOpacity 
+                      style={[styles.deleteButton, { backgroundColor: theme.error }]}
+                      onPress={() => handleDeleteNotice(notice.id, notice.title)}
+                    >
+                      <Icon name="trash" size={14} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
             </TouchableOpacity>
           ))
         )}
@@ -454,6 +476,19 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 44,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  refreshButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
   },
   uploadButton: {
     width: 44,
@@ -558,6 +593,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  footerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   categoryBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -567,18 +607,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
-  readMoreButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  priorityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  readMoreText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginRight: 4,
+  priorityText: {
+    fontSize: 10,
+    fontWeight: '600',
   },
-  readMoreIcon: {
-    marginLeft: 2,
-  },
+
   footerActions: {
     flexDirection: 'row',
     alignItems: 'center',
