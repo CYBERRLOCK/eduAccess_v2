@@ -4,7 +4,7 @@
     "slug": "EduAccess",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "https://i.postimg.cc/JsRJXTkP/Main-Logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {

@@ -2,6 +2,7 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ThemeProvider } from "./components/theme-provider";
+import SplashScreen from "./screens/SplashScreen"; // Import SplashScreen
 import LoginPage from "./screens/loginpage";
 import SignupPage from "./screens/signuppage";
 import MainScreen from "./screens/MainScreen";
@@ -17,6 +18,7 @@ import ProfileScreen from "./screens/ProfileScreen"; // Import ProfileScreen
 import AdminNoticeUpload from "./screens/AdminNoticeUpload"; // Import AdminNoticeUpload
 
 export type RootStackParamList = {
+  SplashScreen: undefined; // Add SplashScreen
   LoginPage: undefined;
   SignupPage: undefined;
   MainScreen: undefined;
@@ -41,12 +43,17 @@ const App: React.FC = () => {
     <ThemeProvider>
       <NavigationContainer>
         <Stack.Navigator 
-          initialRouteName="LoginPage"
+          initialRouteName="SplashScreen"
           screenOptions={{
             headerShown: false,
             gestureEnabled: false
           }}
         >
+        <Stack.Screen
+          name="SplashScreen"
+          component={SplashScreen}
+          options={{ headerShown: false }}
+        />
         <Stack.Screen
           name="LoginPage"
           component={LoginPage}
