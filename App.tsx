@@ -1,131 +1,137 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { ThemeProvider } from "./components/theme-provider";
-import SplashScreen from "./screens/SplashScreen"; // Import SplashScreen
+import { UserProvider } from "./contexts/UserContext";
+import EnhancedBottomNavigator from "./components/EnhancedBottomNavigator";
+import SplashScreen from "./screens/SplashScreen";
 import LoginPage from "./screens/loginpage";
 import SignupPage from "./screens/signuppage";
-import MainScreen from "./screens/MainScreen";
 import FacultyDirectory from "./screens/FacultyDirectory";
-import SettingsPage from "./screens/SettingsPage"; // Import SettingsPage
-import ContactDetailsScreen from "./screens/ContactDetailsScreen"; // Import ContactDetailsScreen
+import SettingsPage from "./screens/SettingsPage";
+import ContactDetailsScreen from "./screens/ContactDetailsScreen";
 import HallBooking from "./screens/HallBooking";
 import FacultyNotice from "./screens/FacultyNotice";
 import ExamDuty from "./screens/ExamDuty";
-import NotificationScreen from "./screens/NotificationScreen"; // Import NotificationScreen
-import ExamSeatingArrangement from "./screens/ExamSeatingArrangement"; // Import ExamSeatingArrangement screen
-import ProfileScreen from "./screens/ProfileScreen"; // Import ProfileScreen
-import AdminNoticeUpload from "./screens/AdminNoticeUpload"; // Import AdminNoticeUpload
+
+import ExamSeatingArrangement from "./screens/ExamSeatingArrangement";
+import ProfileScreen from "./screens/ProfileScreen";
+import AdminNoticeUpload from "./screens/AdminNoticeUpload";
+import EditProfileScreen from "./screens/EditProfileScreen";
+import HomeScreen from "./screens/HomeScreen";
+import NotificationScreen from "./screens/NotificationScreen";
 
 export type RootStackParamList = {
-  SplashScreen: undefined; // Add SplashScreen
+  SplashScreen: undefined;
   LoginPage: undefined;
   SignupPage: undefined;
-  MainScreen: undefined;
-  FacultyDirectory: undefined;
-  SettingsPage: undefined; // Add SettingsPage
-  NotificationScreen: undefined; // Add NotificationScreen
-  ContactDetails: { contacts: any[]; department: string }; // Add ContactDetailsScreen
-  HomePage: undefined;
+  MainTabs: undefined;
+  ContactDetails: { contacts: any[]; department: string };
   HallBooking: undefined;
   FacultyNotice: undefined;
   ExamDuty: undefined;
-  ExamSeatingArrangement: undefined; // Add ExamSeatingArrangement screen
-  ProfileScreen: undefined; // Add ProfileScreen
-  AdminNoticeUpload: undefined; // Add AdminNoticeUpload
-  // ...other routes...
+  ExamSeatingArrangement: undefined;
+  ProfileScreen: undefined;
+  AdminNoticeUpload: undefined;
+  EditProfileScreen: undefined;
+  NotificationScreen: undefined;
+};
+
+export type TabParamList = {
+  Home: undefined;
+  Directory: undefined;
+  ExamSeating: undefined;
+  Settings: undefined;
+  Profile: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator<TabParamList>();
+
+// Tab Navigator Component
+const MainTabs = () => {
+  return (
+    <Tab.Navigator
+      tabBar={props => <EnhancedBottomNavigator {...props} />}
+      screenOptions={{
+        headerShown: false
+      }}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Directory" component={FacultyDirectory} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="ExamSeating" component={ExamSeatingArrangement} />
+      <Tab.Screen name="Settings" component={SettingsPage} />
+    </Tab.Navigator>
+  );
+};
 
 const App: React.FC = () => {
   return (
-    <ThemeProvider>
-      <NavigationContainer>
-        <Stack.Navigator 
-          initialRouteName="SplashScreen"
-          screenOptions={{
-            headerShown: false,
-            gestureEnabled: false
-          }}
-        >
-        <Stack.Screen
-          name="SplashScreen"
-          component={SplashScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="LoginPage"
-          component={LoginPage}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="SignupPage"
-          component={SignupPage}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="MainScreen"
-          component={MainScreen}
-          options={{ headerShown: false }}
-        />
-        
-        <Stack.Screen
-          name="FacultyDirectory"
-          component={FacultyDirectory}
-          options={{ 
-            headerShown: false
-          }}
-        />
-        <Stack.Screen
-          name="SettingsPage"
-          component={SettingsPage}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="NotificationScreen"
-          component={NotificationScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ContactDetails"
-          component={ContactDetailsScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="HallBooking"
-          component={HallBooking}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="FacultyNotice"
-          component={FacultyNotice}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ExamDuty"
-          component={ExamDuty}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ExamSeatingArrangement"
-          component={ExamSeatingArrangement}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ProfileScreen"
-          component={ProfileScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="AdminNoticeUpload"
-          component={AdminNoticeUpload}
-          options={{ headerShown: false }}
-        />
-        {/* Add other screens here */}
-      </Stack.Navigator>
-      </NavigationContainer>
-    </ThemeProvider>
+    <UserProvider>
+      <ThemeProvider>
+        <NavigationContainer>
+          <Stack.Navigator 
+            initialRouteName="SplashScreen"
+            screenOptions={{
+              headerShown: false,
+              gestureEnabled: false
+            }}
+          >
+            <Stack.Screen
+              name="SplashScreen"
+              component={SplashScreen}
+            />
+            <Stack.Screen
+              name="LoginPage"
+              component={LoginPage}
+            />
+            <Stack.Screen
+              name="SignupPage"
+              component={SignupPage}
+            />
+            <Stack.Screen
+              name="MainTabs"
+              component={MainTabs}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="ContactDetails"
+              component={ContactDetailsScreen}
+            />
+            <Stack.Screen
+              name="HallBooking"
+              component={HallBooking}
+            />
+            <Stack.Screen
+              name="FacultyNotice"
+              component={FacultyNotice}
+            />
+            <Stack.Screen
+              name="ExamDuty"
+              component={ExamDuty}
+            />
+            <Stack.Screen
+              name="ExamSeatingArrangement"
+              component={ExamSeatingArrangement}
+            />
+            <Stack.Screen
+              name="AdminNoticeUpload"
+              component={AdminNoticeUpload}
+            />
+            <Stack.Screen
+              name="EditProfileScreen"
+              component={EditProfileScreen}
+            />
+            <Stack.Screen
+              name="NotificationScreen"
+              component={NotificationScreen}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </ThemeProvider>
+    </UserProvider>
   );
 };
 

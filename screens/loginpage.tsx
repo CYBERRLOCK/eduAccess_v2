@@ -26,12 +26,14 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import type { RootStackParamList } from "../App";
 import { useTheme } from "../components/theme-provider";
+import { useUser } from "../contexts/UserContext";
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, "LoginPage">;
 
 const LoginPage: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { theme } = useTheme();
+  const { setUserEmail } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -69,8 +71,9 @@ const LoginPage: React.FC = () => {
       }
 
       if (data && data.session) {
-        // You can use rememberMe here to store credentials if needed
-        navigation.navigate("MainScreen");
+        // Save the user's email for profile fetching
+        await setUserEmail(email);
+        navigation.navigate("MainTabs");
       } else {
         Alert.alert("Error", "Login failed. Please check your credentials.");
       }

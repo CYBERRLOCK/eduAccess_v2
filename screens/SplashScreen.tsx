@@ -4,12 +4,14 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
 import { useTheme } from '../components/theme-provider';
+import { useUser } from '../contexts/UserContext';
 
 type SplashScreenNavigationProp = StackNavigationProp<RootStackParamList, 'SplashScreen'>;
 
 const SplashScreen: React.FC = () => {
   const navigation = useNavigation<SplashScreenNavigationProp>();
   const { theme } = useTheme();
+  const { isAuthenticated } = useUser();
   const fadeAnim = new Animated.Value(0);
   const scaleAnim = new Animated.Value(0.8);
 
@@ -29,9 +31,13 @@ const SplashScreen: React.FC = () => {
       })
     ]).start();
 
-    // Navigate to LoginPage after 2.5 seconds
+    // Navigate based on authentication status after 2.5 seconds
     const timer = setTimeout(() => {
-      navigation.replace('LoginPage');
+      if (isAuthenticated) {
+        navigation.replace('MainTabs');
+      } else {
+        navigation.replace('LoginPage');
+      }
     }, 2500);
 
     return () => clearTimeout(timer);

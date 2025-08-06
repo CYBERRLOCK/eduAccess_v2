@@ -10,12 +10,15 @@ import {
   StatusBar,
   Animated,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import type { RootStackParamList } from '../App';
 import { useTheme } from '../components/theme-provider';
+import { useUser } from '../contexts/UserContext';
+import { fetchUserProfileByEmail, type UserProfile } from '../api/profileApi';
 import { BackHandler } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -40,19 +43,55 @@ interface ProfileItem {
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { theme } = useTheme();
+  const { userEmail, logout: userLogout } = useUser();
   const [slideAnim] = useState(new Animated.Value(50));
   const [fadeAnim] = useState(new Animated.Value(0));
+  const [isLoading, setIsLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   // Handle hardware back button
   useEffect(() => {
     const backAction = () => {
-      navigation.navigate('MainScreen');
+      navigation.navigate('MainTabs', { screen: 'Home' });
       return true;
     };
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
   }, [navigation]);
+
+  // Fetch user profile data
+  useEffect(() => {
+    if (userEmail) {
+      fetchProfileData();
+    } else {
+      setIsLoading(false);
+    }
+  }, [userEmail]);
+
+  // Refresh profile data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (userEmail) {
+        fetchProfileData();
+      }
+    }, [userEmail])
+  );
+
+  const fetchProfileData = async () => {
+    if (!userEmail) return;
+    
+    setIsLoading(true);
+    try {
+      const profile = await fetchUserProfileByEmail(userEmail);
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      Alert.alert('Error', 'Failed to load profile data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Slide-in animation on mount
   useEffect(() => {
@@ -87,9 +126,24 @@ const ProfileScreen: React.FC = () => {
       title: 'Personal Information',
       icon: 'user',
       items: [
-        { id: 'name', label: 'Full Name', value: profileData.name, type: 'text' },
-        { id: 'email', label: 'Email', value: profileData.email, type: 'email' },
-        { id: 'phone', label: 'Phone', value: profileData.phone, type: 'phone' },
+        { 
+          id: 'name', 
+          label: 'Full Name', 
+          value: userProfile?.name || 'Not Available', 
+          type: 'text' 
+        },
+        { 
+          id: 'email', 
+          label: 'Email', 
+          value: userProfile?.email || userEmail || 'Not Available', 
+          type: 'email' 
+        },
+        { 
+          id: 'phone', 
+          label: 'Phone', 
+          value: userProfile?.phone || 'Not Available', 
+          type: 'phone' 
+        },
       ],
     },
     {
@@ -97,9 +151,24 @@ const ProfileScreen: React.FC = () => {
       title: 'Academic Details',
       icon: 'graduation-cap',
       items: [
-        { id: 'department', label: 'Department', value: profileData.department, type: 'text' },
-        { id: 'designation', label: 'Designation', value: profileData.designation, type: 'text' },
-        { id: 'employeeId', label: 'Employee ID', value: profileData.employeeId, type: 'text' },
+        { 
+          id: 'department', 
+          label: 'Department', 
+          value: userProfile?.department || 'Not Available', 
+          type: 'text' 
+        },
+        { 
+          id: 'designation', 
+          label: 'Designation', 
+          value: userProfile?.designation || 'Not Available', 
+          type: 'text' 
+        },
+        { 
+          id: 'employeeId', 
+          label: 'Employee ID', 
+          value: userProfile?.employee_id || '', 
+          type: 'text' 
+        },
       ],
     },
     {
@@ -107,14 +176,24 @@ const ProfileScreen: React.FC = () => {
       title: 'Work Information',
       icon: 'building',
       items: [
-        { id: 'office', label: 'Office Location', value: profileData.office, type: 'text' },
-        { id: 'joiningDate', label: 'Joining Date', value: profileData.joiningDate, type: 'text' },
+        { 
+          id: 'office', 
+          label: 'Office Location', 
+          value: userProfile?.office_location || '', 
+          type: 'text' 
+        },
+        { 
+          id: 'joiningDate', 
+          label: 'Joining Date', 
+          value: userProfile?.joining_date || '', 
+          type: 'text' 
+        },
       ],
     },
   ];
 
   const handleEditProfile = () => {
-    Alert.alert('Edit Profile', 'Profile editing feature coming soon!');
+    navigation.navigate('EditProfileScreen');
   };
 
   const handleLogout = () => {
@@ -126,7 +205,10 @@ const ProfileScreen: React.FC = () => {
         { 
           text: 'Logout', 
           style: 'destructive',
-          onPress: () => navigation.navigate('LoginPage')
+          onPress: async () => {
+            await userLogout();
+            navigation.navigate('LoginPage');
+          }
         },
       ]
     );
@@ -142,24 +224,23 @@ const ProfileScreen: React.FC = () => {
         },
       ]}
     >
-      <View style={styles.profileImageContainer}>
-        <Image
-          source={{ uri: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face' }}
-          style={styles.profileImage}
-        />
-        <TouchableOpacity style={styles.editImageButton}>
-          <Icon name="camera" size={16} color={theme.textPrimary} />
-        </TouchableOpacity>
-      </View>
+             <View style={styles.profileImageContainer}>
+         <Image
+           source={{ 
+             uri: userProfile?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face' 
+           }}
+           style={styles.profileImage}
+         />
+       </View>
       
       <Text style={[styles.profileName, { color: theme.textPrimary }]}>
-        {profileData.name}
+        {userProfile?.name || 'Loading...'}
       </Text>
       <Text style={[styles.profileDesignation, { color: theme.textSecondary }]}>
-        {profileData.designation}
+        {userProfile?.designation || 'Loading...'}
       </Text>
       <Text style={[styles.profileDepartment, { color: theme.textTertiary }]}>
-        {profileData.department}
+        {userProfile?.department || 'Loading...'}
       </Text>
     </Animated.View>
   );
@@ -190,8 +271,14 @@ const ProfileScreen: React.FC = () => {
             <Text style={[styles.itemLabel, { color: theme.textSecondary }]}>
               {item.label}
             </Text>
-            <Text style={[styles.itemValue, { color: theme.textPrimary }]}>
-              {item.value}
+            <Text style={[
+              styles.itemValue, 
+              { 
+                color: item.value ? theme.textPrimary : theme.textTertiary,
+                fontStyle: item.value ? 'normal' : 'italic'
+              }
+            ]}>
+              {item.value || 'Not Available'}
             </Text>
             {itemIndex < section.items.length - 1 && (
               <View style={[styles.itemDivider, { backgroundColor: theme.borderLight }]} />
@@ -235,6 +322,20 @@ const ProfileScreen: React.FC = () => {
       </TouchableOpacity>
     </Animated.View>
   );
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+        <StatusBar barStyle="dark-content" backgroundColor={theme.backgroundColor} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.accentPrimary} />
+          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
+            Loading profile...
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
@@ -295,6 +396,16 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '500',
+  },
   header: {
     borderBottomWidth: 1,
     paddingTop: 48,
@@ -345,22 +456,11 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginBottom: 16,
   },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  editImageButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+     profileImage: {
+     width: 120,
+     height: 120,
+     borderRadius: 60,
+   },
   profileName: {
     fontSize: 24,
     fontWeight: '700',
@@ -437,4 +537,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen; 
+export default ProfileScreen;

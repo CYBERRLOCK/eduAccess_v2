@@ -90,7 +90,7 @@ const FacultyDirectory: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.navigate('MainScreen');
+        navigation.navigate('MainTabs', { screen: 'Home' });
         return true;
       };
 
@@ -437,7 +437,7 @@ const FacultyDirectory: React.FC = () => {
           {/* Settings Button */}
           <TouchableOpacity 
             style={[styles.iconButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderColor }]}
-            onPress={() => navigation.navigate("SettingsPage")}
+            onPress={() => navigation.navigate("Settings")}
           >
             <Icon name="cog" size={20} color={theme.textPrimary} />
           </TouchableOpacity>

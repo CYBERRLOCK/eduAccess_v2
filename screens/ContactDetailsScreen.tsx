@@ -16,11 +16,11 @@ const ContactDetails: React.FC = () => {
   const [photoViewerVisible, setPhotoViewerVisible] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<{ url: string; name: string } | null>(null);
 
-  // Back button logic to navigate back to FacultyDirectory
+  // Back button logic to navigate back to Directory tab
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.navigate('FacultyDirectory');
+        navigation.navigate('MainTabs', { screen: 'Directory' });
         return true;
       };
 

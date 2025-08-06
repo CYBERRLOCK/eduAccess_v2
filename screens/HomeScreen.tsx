@@ -8,7 +8,9 @@ import {
   Image, 
   Dimensions,
   StatusBar,
-  Animated
+  Animated,
+  BackHandler,
+  Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -56,6 +58,31 @@ const HomeScreen: React.FC = () => {
       })
     ]).start();
   }, []);
+
+  // Handle hardware back button
+  useEffect(() => {
+    const backAction = () => {
+      Alert.alert(
+        'Exit EduAccess',
+        'Do you want to exit EduAccess?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Exit',
+            style: 'destructive',
+            onPress: () => BackHandler.exitApp(),
+          },
+        ]
+      );
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => backHandler.remove();
+  }, []);
   
   const menuItems: MenuItem[] = [
     { 
@@ -99,7 +126,7 @@ const HomeScreen: React.FC = () => {
       setSelectedCard(null);
       // Navigate to the specific screen
       if (screen === 'FacultyDirectory') {
-        navigation.navigate('FacultyDirectory');
+        navigation.navigate('MainTabs', { screen: 'Directory' });
       } else if (screen === 'HallBooking') {
         navigation.navigate('HallBooking');
       } else if (screen === 'FacultyNotice') {
@@ -172,7 +199,7 @@ const HomeScreen: React.FC = () => {
             </View>
           </View>
           
-          <View style={styles.iconContainer}>
+                               <View style={styles.iconContainer}>
             <TouchableOpacity 
               style={[styles.iconButton, { backgroundColor: theme.surfaceColor }]}
               onPress={() => navigation.navigate('NotificationScreen')}
@@ -181,7 +208,7 @@ const HomeScreen: React.FC = () => {
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.iconButton, { backgroundColor: theme.surfaceColor }]}
-              onPress={() => navigation.navigate('SettingsPage')}
+              onPress={() => navigation.navigate('Settings')}
             >
               <Icon name="cog" size={20} color={theme.textPrimary} />
             </TouchableOpacity>

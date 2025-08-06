@@ -1,21 +1,14 @@
 import React, { useState, useCallback } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, ScrollView, Animated, Image, BackHandler } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, ScrollView, Animated, Image, BackHandler, ActivityIndicator } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { StackNavigationProp } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useTheme } from "../components/theme-provider";
-import { LinearGradient } from 'expo-linear-gradient';
+import { fetchNotifications, type Notification } from "../api/notificationApi";
 
 import type { RootStackParamList } from "../App";
 
-interface Notification {
-  id: string;
-  title: string;
-  description: string;
-  timestamp: string;
-  type: 'info' | 'alert' | 'success' | 'warning';
-  isRead: boolean;
-}
+
 
 const NotificationScreen: React.FC = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -25,7 +18,7 @@ const NotificationScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.navigate('MainScreen');
+        navigation.navigate('MainTabs', { screen: 'Home' });
         return true;
       };
 
@@ -33,34 +26,22 @@ const NotificationScreen: React.FC = () => {
       return () => subscription.remove();
     }, [navigation])
   );
-  const [notifications, setNotifications] = useState<Notification[]>([
-    // Sample notifications to demonstrate the design
-    {
-      id: '1',
-      title: 'New Faculty Notice Posted',
-      description: 'A new announcement has been posted in the Faculty Notice section.',
-      timestamp: '2m ago',
-      type: 'info',
-      isRead: false,
-    },
-    {
-      id: '2',
-      title: 'Hall Booking Approved',
-      description: 'Your request for Hall 2 has been approved for the AI Workshop.',
-      timestamp: '1h ago',
-      type: 'success',
-      isRead: true,
-    },
-    {
-      id: '3',
-      title: 'System Maintenance Alert',
-      description: 'Scheduled maintenance will occur tonight from 10 PM to 2 AM.',
-      timestamp: '3h ago',
-      type: 'warning',
-      isRead: false,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [fadeAnim] = useState(new Animated.Value(0));
+
+  // Load notifications from database
+  const loadNotifications = async () => {
+    try {
+      setIsLoading(true);
+      const fetchedNotifications = await fetchNotifications();
+      setNotifications(fetchedNotifications);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   React.useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -68,7 +49,16 @@ const NotificationScreen: React.FC = () => {
       duration: 800,
       useNativeDriver: true,
     }).start();
+    
+    loadNotifications();
   }, []);
+
+  // Refresh notifications when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadNotifications();
+    }, [])
+  );
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -90,8 +80,24 @@ const NotificationScreen: React.FC = () => {
     }
   };
 
+  const handleNotificationPress = (notification: Notification) => {
+    console.log('Notification pressed:', notification.title);
+    
+    // Navigate to FacultyNotice screen for notice-related notifications
+    if (notification.title.includes('Faculty Notice') || 
+        notification.title.includes('Notice Published') ||
+        notification.title.includes('New Faculty Notice')) {
+      console.log('Navigating to FacultyNotice');
+      navigation.navigate('FacultyNotice');
+    } else {
+      console.log('No navigation for this notification type, but navigating anyway for testing');
+      // For testing purposes, navigate to FacultyNotice for all notifications
+      navigation.navigate('FacultyNotice');
+    }
+  };
+
   const renderNotificationCard = (notification: Notification) => (
-    <Animated.View
+    <TouchableOpacity
       key={notification.id}
       style={[
         styles.notificationCard,
@@ -102,6 +108,13 @@ const NotificationScreen: React.FC = () => {
           opacity: notification.isRead ? 0.7 : 1,
         }
       ]}
+      onPress={() => {
+        console.log('TouchableOpacity pressed for:', notification.title);
+        handleNotificationPress(notification);
+      }}
+      onPressIn={() => console.log('Press in detected')}
+      activeOpacity={0.6}
+      delayPressIn={0}
     >
       <View style={styles.notificationIcon}>
         <Icon 
@@ -120,10 +133,18 @@ const NotificationScreen: React.FC = () => {
         </Text>
       </View>
       
-      <Text style={[styles.notificationTimestamp, { color: theme.textTertiary }]}>
-        {notification.timestamp}
-      </Text>
-    </Animated.View>
+      <View style={styles.notificationRight}>
+        <Text style={[styles.notificationTimestamp, { color: theme.textTertiary }]}>
+          {notification.timestamp}
+        </Text>
+        <Icon 
+          name="chevron-right" 
+          size={16} 
+          color={theme.textTertiary} 
+          style={styles.chevronIcon}
+        />
+      </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -137,64 +158,63 @@ const NotificationScreen: React.FC = () => {
         />
       )}
       
-      {/* Gradient Background */}
-      <LinearGradient
-        colors={[theme.backgroundColor, theme.accentTertiary + '20', theme.backgroundColor]}
-        style={styles.gradientBackground}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor={theme.backgroundColor} />
       
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: 'transparent' }]}>
+      <View style={[styles.header, { backgroundColor: theme.backgroundColor, borderBottomColor: theme.borderColor }]}>
         <View style={styles.headerContent}>
           <TouchableOpacity 
-            style={[styles.backButton, { backgroundColor: theme.surfaceColor + '80', borderColor: theme.borderLight }]}
+            style={[styles.backButton, { backgroundColor: theme.surfaceColor, borderColor: theme.borderLight }]}
             onPress={() => navigation.goBack()}
           >
-            <Icon name="arrow-left" size={18} color={theme.textSecondary} />
+            <Icon name="arrow-left" size={20} color={theme.textPrimary} />
           </TouchableOpacity>
           
           <View style={styles.titleContainer}>
             <Text style={[styles.title, { color: theme.textPrimary }]}>Notifications</Text>
-            <Text style={[styles.subtitle, { color: theme.textTertiary }]}>Stay updated with latest updates</Text>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Stay updated with latest updates</Text>
           </View>
-
-          <View style={{ width: 44 }} />
+          
+          <View style={styles.placeholder} />
         </View>
       </View>
 
-      {/* Content */}
-      <ScrollView 
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.contentContainer}
-      >
-        {notifications.length > 0 ? (
-          <Animated.View style={{ opacity: fadeAnim }}>
-            {notifications.map(renderNotificationCard)}
-          </Animated.View>
-        ) : (
-          <Animated.View style={[styles.emptyState, { opacity: fadeAnim }]}>
-            {/* Glow Effect Container */}
-            <View style={[styles.glowContainer, { backgroundColor: theme.accentTertiary + '30' }]}>
-              <Icon 
-                name="bell-o" 
-                size={56} 
-                color={theme.accentPrimary} 
-                style={styles.emptyIcon} 
-              />
-            </View>
-            
-            <Text style={[styles.emptyTitle, { color: theme.textPrimary }]}>
-              No Notifications Yet
-            </Text>
-            <Text style={[styles.emptyText, { color: theme.textTertiary }]}>
-              You'll see important updates and announcements here when they become available.
-            </Text>
-          </Animated.View>
-        )}
-      </ScrollView>
+             {/* Content */}
+       <ScrollView 
+         style={styles.content}
+         showsVerticalScrollIndicator={false}
+         contentContainerStyle={styles.contentContainer}
+       >
+         {isLoading ? (
+           <View style={styles.loadingContainer}>
+             <ActivityIndicator size="large" color={theme.accentPrimary} />
+             <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
+               Loading notifications...
+             </Text>
+           </View>
+         ) : notifications.length > 0 ? (
+           <Animated.View style={{ opacity: fadeAnim }}>
+             {notifications.map(renderNotificationCard)}
+           </Animated.View>
+         ) : (
+           <Animated.View style={[styles.emptyState, { opacity: fadeAnim }]}>
+             <View style={[styles.emptyIconContainer, { backgroundColor: theme.surfaceColor, borderColor: theme.borderLight }]}>
+               <Icon 
+                 name="bell-o" 
+                 size={48} 
+                 color={theme.textSecondary} 
+               />
+             </View>
+             
+             <Text style={[styles.emptyTitle, { color: theme.textPrimary }]}>
+               No Notifications Yet
+             </Text>
+             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+               You'll see important updates and announcements here when they become available.
+             </Text>
+           </Animated.View>
+         )}
+       </ScrollView>
     </View>
   );
 };
@@ -202,7 +222,6 @@ const NotificationScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: StatusBar.currentHeight || 0,
   },
   backgroundImage: {
     position: 'absolute',
@@ -213,17 +232,14 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  gradientBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
   header: {
-    height: 100,
-    elevation: 0,
-    shadowOpacity: 0,
+    height: 120,
+    borderBottomWidth: 1,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   headerContent: {
     flex: 1,
@@ -240,36 +256,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
-    borderWidth: 0.5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    borderWidth: 1,
   },
   titleContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "700",
-    lineHeight: 30,
-    letterSpacing: -0.5,
+    fontSize: 22,
+    fontWeight: "bold",
+    lineHeight: 28,
   },
   subtitle: {
-    fontSize: 15,
-    fontWeight: "400",
-    marginTop: 2,
+    fontSize: 16,
+    fontWeight: "500",
+    marginTop: 4,
     lineHeight: 20,
-    opacity: 0.8,
+  },
+  placeholder: {
+    width: 44,
   },
   content: {
     flex: 1,
   },
   contentContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 40,
+    padding: 24,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 80,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '500',
   },
   emptyState: {
     flex: 1,
@@ -278,50 +299,43 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
     paddingHorizontal: 32,
   },
-  glowContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  emptyIcon: {
-    opacity: 0.9,
+    marginBottom: 24,
+    borderWidth: 1,
   },
   emptyTitle: {
-    fontSize: 22,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     marginBottom: 12,
     textAlign: 'center',
-    letterSpacing: -0.3,
   },
   emptyText: {
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: 20,
-    opacity: 0.7,
-    fontWeight: '400',
+    fontWeight: '500',
   },
   notificationCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
     marginBottom: 16,
-    borderRadius: 16,
-    borderWidth: 0.5,
+    borderRadius: 12,
+    borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
     minHeight: 80,
+    // Ensure proper touch target
+    minWidth: 44,
   },
   notificationIcon: {
     width: 48,
@@ -347,11 +361,20 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     opacity: 0.8,
   },
+  notificationRight: {
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    height: '100%',
+  },
   notificationTimestamp: {
     fontSize: 12,
     fontWeight: '400',
     textAlign: 'right',
     opacity: 0.6,
+    marginBottom: 4,
+  },
+  chevronIcon: {
+    marginTop: 2,
   },
 });
 

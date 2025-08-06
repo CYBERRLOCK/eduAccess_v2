@@ -14,7 +14,7 @@ const SettingsPage: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.navigate('MainScreen');
+        navigation.navigate('MainTabs', { screen: 'Home' });
         return true;
       };
 

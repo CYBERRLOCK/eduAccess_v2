@@ -9,6 +9,7 @@ import {
   Vibration,
   Platform
 } from 'react-native';
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useTheme } from './theme-provider';
 
@@ -23,86 +24,92 @@ interface TabItem {
   badge?: number;
 }
 
-interface EnhancedBottomNavigatorProps {
-  currentScreen: string;
-  onTabPress: (screen: string) => void;
-}
-
-const EnhancedBottomNavigator: React.FC<EnhancedBottomNavigatorProps> = ({ 
-  currentScreen, 
-  onTabPress 
+const EnhancedBottomNavigator: React.FC<BottomTabBarProps> = ({ 
+  state,
+  descriptors,
+  navigation
 }) => {
   const { theme } = useTheme();
   
-  // Enhanced tabs with badges and better icons
-  const tabs: TabItem[] = [
-    {
-      key: 'ProfileScreen',
-      title: 'Profile',
-      icon: 'user',
-      activeIcon: 'user',
-      screen: 'ProfileScreen'
-    },
-    {
-      key: 'FacultyDirectory',
-      title: 'Directory',
-      icon: 'users',
-      activeIcon: 'users',
-      screen: 'FacultyDirectory'
-    },
-    {
-      key: 'HomePage',
-      title: 'Home',
-      icon: 'home',
-      activeIcon: 'home',
-      screen: 'HomePage'
-    },
-    {
-      key: 'NotificationScreen',
-      title: 'Notifications',
-      icon: 'bell',
-      activeIcon: 'bell',
-      screen: 'NotificationScreen',
-      badge: 3 // Example badge count
-    },
-    {
-      key: 'SettingsPage',
-      title: 'Settings',
-      icon: 'cog',
-      activeIcon: 'cog',
-      screen: 'SettingsPage'
+  // Map navigation state to our tab format
+  const tabs: TabItem[] = state.routes.map(route => {
+    const { options } = descriptors[route.key];
+    const label = options.tabBarLabel !== undefined
+      ? options.tabBarLabel
+      : options.title !== undefined
+        ? options.title
+        : route.name;
+        
+    // Map route names to icons
+    let icon = 'circle';
+    switch(route.name) {
+      case 'Home':
+        icon = 'home';
+        break;
+      case 'Directory':
+        icon = 'users';
+        break;
+      case 'Profile':
+        icon = 'user';
+        break;
+      case 'ExamSeating':
+        icon = 'th-large';
+        break;
+      case 'Settings':
+        icon = 'cog';
+        break;
     }
-  ];
+    
+    return {
+      key: route.key,
+      title: label.toString(),
+      icon: icon,
+      activeIcon: icon,
+      screen: route.name,
+      badge: options.tabBarBadge ? Number(options.tabBarBadge) : undefined
+    };
+  });
 
-  const [activeTab, setActiveTab] = useState(currentScreen);
-  const [floatingButtonAnim] = useState(new Animated.Value(0));
+  const [activeTab, setActiveTab] = useState<string>(state.routes[state.index].key);
+  const [floatingButtonAnim] = useState(new Animated.Value(state.index));
   const [scaleAnim] = useState(new Animated.Value(1));
   const [rippleAnim] = useState(new Animated.Value(0));
   const [glowAnim] = useState(new Animated.Value(0));
 
+  // Update active tab when navigation state changes
+  useEffect(() => {
+    setActiveTab(state.routes[state.index].key);
+    Animated.timing(floatingButtonAnim, {
+      toValue: state.index,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [state.index, state.routes]);
+
   const getActiveTabIndex = () => {
-    return tabs.findIndex(tab => tab.key === activeTab);
+    return state.index;
   };
 
-  const handleTabPress = (tab: TabItem, index: number) => {
-    if (activeTab !== tab.key) {
-      const newIndex = tabs.findIndex(t => t.key === tab.key);
-      
-      // Haptic feedback - simplified to avoid expo-haptics dependency
+  const handleTabPress = (route: string, index: number) => {
+    const isFocused = state.index === index;
+    
+    const event = navigation.emit({
+      type: 'tabPress',
+      target: route,
+      canPreventDefault: true,
+    });
+
+    if (!isFocused && !event.defaultPrevented) {
+      // Haptic feedback
       if (Platform.OS === 'android') {
         Vibration.vibrate(50);
       }
       
-      setActiveTab(tab.key);
-      onTabPress(tab.screen);
+      // Navigate to the tab
+      navigation.navigate(state.routes[index].name);
       
-      // Enhanced floating button animation
+      // Animations
       Animated.parallel([
-        Animated.timing(floatingButtonAnim, {
-          toValue: newIndex,
-          duration: 300,
-          useNativeDriver: true,
-        }),
         // Enhanced scale animation
         Animated.sequence([
           Animated.timing(scaleAnim, {
@@ -145,12 +152,6 @@ const EnhancedBottomNavigator: React.FC<EnhancedBottomNavigatorProps> = ({
       ]).start();
     }
   };
-
-  // Initialize animations
-  useEffect(() => {
-    const activeIndex = getActiveTabIndex();
-    floatingButtonAnim.setValue(activeIndex);
-  }, []);
 
   // Calculate dimensions for perfect alignment
   const tabWidth = width / tabs.length;
@@ -200,7 +201,7 @@ const EnhancedBottomNavigator: React.FC<EnhancedBottomNavigatorProps> = ({
           },
         ]}
       >
-        {/* Ripple effect */}
+        {/* Upside-down ripple effect */}
         <Animated.View
           style={[
             styles.rippleEffect,
@@ -227,14 +228,14 @@ const EnhancedBottomNavigator: React.FC<EnhancedBottomNavigatorProps> = ({
 
       {/* Enhanced tab buttons with badges */}
       {tabs.map((tab, index) => {
-        const isActive = activeTab === tab.key;
+        const isActive = state.index === index;
         const iconName = isActive ? (tab.activeIcon || tab.icon) : tab.icon;
         
         return (
           <TouchableOpacity
             key={tab.key}
             style={[styles.tab, { width: tabWidth }]}
-            onPress={() => handleTabPress(tab, index)}
+            onPress={() => handleTabPress(tab.key, index)}
             activeOpacity={0.8}
           >
             <View style={styles.tabContent}>
@@ -257,7 +258,7 @@ const EnhancedBottomNavigator: React.FC<EnhancedBottomNavigatorProps> = ({
                 style={[
                   styles.tabText,
                   { 
-                    color: isActive ? theme.accentPrimary : theme.textSecondary,
+                    color: isActive ? '#000000' : theme.textSecondary,
                   },
                 ]}
                 numberOfLines={1}
@@ -302,17 +303,27 @@ const styles = StyleSheet.create({
   floatingButton: {
     position: 'absolute',
     top: -20, // Adjusted for better alignment
-    borderRadius: 28, // Half of width/height
+    borderRadius: 28, // Keep base radius for smooth edges
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
+    // Create upside-down ripple shape using border radius
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   rippleEffect: {
     position: 'absolute',
     width: '100%',
     height: '100%',
-    borderRadius: 28,
+    borderRadius: 28, // Keep base radius for smooth edges
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    // Create upside-down ripple shape using border radius
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   tab: {
     justifyContent: 'center',
@@ -348,4 +359,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EnhancedBottomNavigator; 
+export default EnhancedBottomNavigator;

@@ -19,6 +19,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import type { RootStackParamList } from '../App';
 import { useTheme } from '../components/theme-provider';
 import { createFacultyNotice, uploadNoticePDF, verifyStorageSetup, generateNoticeSummary, type FacultyNotice } from '../api/noticesApi';
+import { createNoticePublishedNotification } from '../api/notificationApi';
 
 type AdminNoticeUploadNavigationProp = StackNavigationProp<RootStackParamList, 'AdminNoticeUpload'>;
 
@@ -112,6 +113,17 @@ const AdminNoticeUpload = () => {
       };
 
       const createdNotice = await createFacultyNotice(noticeData);
+
+      // Create notification for the published notice
+      if (createdNotice) {
+        try {
+          await createNoticePublishedNotification(formData.title);
+          console.log('Notification created for published notice');
+        } catch (notificationError) {
+          console.error('Error creating notification:', notificationError);
+          // Don't fail the upload if notification creation fails
+        }
+      }
 
       // Generate AI summary if PDF was uploaded
       if (pdfUrl && createdNotice) {

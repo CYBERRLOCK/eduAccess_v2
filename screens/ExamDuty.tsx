@@ -86,7 +86,7 @@ const ExamDuty: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.navigate('MainScreen');
+        navigation.navigate('MainTabs', { screen: 'Home' });
         return true;
       };
 
@@ -399,4 +399,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ExamDuty; 
+export default ExamDuty;

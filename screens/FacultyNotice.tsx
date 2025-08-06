@@ -40,7 +40,7 @@ const FacultyNotice = () => {
   // Handle hardware back button
   useEffect(() => {
     const backAction = () => {
-      navigation.navigate('MainScreen');
+      navigation.navigate('MainTabs', { screen: 'Home' });
       return true;
     };
 
@@ -736,4 +736,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FacultyNotice; 
+export default FacultyNotice;

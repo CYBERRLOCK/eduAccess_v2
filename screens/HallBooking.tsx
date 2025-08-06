@@ -59,7 +59,7 @@ const HallBooking: React.FC = () => {
   // Handle hardware back button
   useEffect(() => {
     const backAction = () => {
-      navigation.navigate('MainScreen');
+      navigation.navigate('MainTabs', { screen: 'Home' });
       return true;
     };
 
@@ -761,4 +761,4 @@ const HallBooking: React.FC = () => {
   );
 };
 
-export default HallBooking; 
+export default HallBooking;
