@@ -12,7 +12,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import type { RootStackParamList } from '../App';
@@ -20,6 +20,7 @@ import { useTheme } from '../components/theme-provider';
 import { useUser } from '../contexts/UserContext';
 import { fetchUserProfileByEmail, type UserProfile } from '../api/profileApi';
 import { BackHandler } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -52,7 +53,7 @@ const ProfileScreen: React.FC = () => {
   // Handle hardware back button
   useEffect(() => {
     const backAction = () => {
-      navigation.navigate('MainTabs', { screen: 'Home' });
+      navigation.navigate('MainTabs');
       return true;
     };
 
@@ -60,23 +61,29 @@ const ProfileScreen: React.FC = () => {
     return () => backHandler.remove();
   }, [navigation]);
 
-  // Fetch user profile data
+  // Initialize profile data from cache first; fetch only if cache missing
   useEffect(() => {
-    if (userEmail) {
-      fetchProfileData();
-    } else {
-      setIsLoading(false);
-    }
-  }, [userEmail]);
-
-  // Refresh profile data when screen comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      if (userEmail) {
-        fetchProfileData();
+    const initProfile = async () => {
+      if (!userEmail) {
+        setIsLoading(false);
+        return;
       }
-    }, [userEmail])
-  );
+      setIsLoading(true);
+      try {
+        const cached = await loadCachedProfile(userEmail);
+        if (cached) {
+          setUserProfile(cached);
+          setIsLoading(false);
+          return; // Do not refetch if cache exists
+        }
+        // No cache, fetch once and cache it
+        await fetchProfileData();
+      } catch (e) {
+        await fetchProfileData();
+      }
+    };
+    initProfile();
+  }, [userEmail]);
 
   const fetchProfileData = async () => {
     if (!userEmail) return;
@@ -85,11 +92,36 @@ const ProfileScreen: React.FC = () => {
     try {
       const profile = await fetchUserProfileByEmail(userEmail);
       setUserProfile(profile);
+      // Cache profile for future loads
+      await saveCachedProfile(userEmail, profile);
     } catch (error) {
       console.error('Error fetching profile:', error);
       Alert.alert('Error', 'Failed to load profile data. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Cache helpers
+  const getProfileCacheKey = (email: string) => `profile:${email}`;
+
+  const loadCachedProfile = async (email: string): Promise<UserProfile | null> => {
+    try {
+      const key = getProfileCacheKey(email);
+      const raw = await AsyncStorage.getItem(key);
+      if (!raw) return null;
+      return JSON.parse(raw) as UserProfile;
+    } catch {
+      return null;
+    }
+  };
+
+  const saveCachedProfile = async (email: string, profile: UserProfile): Promise<void> => {
+    try {
+      const key = getProfileCacheKey(email);
+      await AsyncStorage.setItem(key, JSON.stringify(profile));
+    } catch {
+      // ignore cache write errors
     }
   };
 

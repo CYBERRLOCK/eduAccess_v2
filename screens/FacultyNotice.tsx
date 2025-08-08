@@ -19,6 +19,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { WebView } from 'react-native-webview';
 import type { RootStackParamList } from '../App';
 import { useTheme } from '../components/theme-provider';
 import { fetchFacultyNotices, searchFacultyNotices, cleanupOldNotices, deleteFacultyNotice, type FacultyNotice } from '../api/noticesApi';
@@ -40,7 +41,7 @@ const FacultyNotice = () => {
   // Handle hardware back button
   useEffect(() => {
     const backAction = () => {
-      navigation.navigate('MainTabs', { screen: 'Home' });
+      navigation.navigate('MainTabs');
       return true;
     };
 
@@ -162,6 +163,30 @@ const FacultyNotice = () => {
   const closeImageViewer = () => {
     setImageViewerVisible(false);
     setSelectedImage(null);
+  };
+
+  // Convert PDF URL to image URL using a PDF to image service
+  const convertPDFToImageUrl = (pdfUrl: string): string => {
+    // Option 1: If you have image versions of PDFs with same name (recommended)
+    // Upload both PDF and PNG versions to your storage with same name
+    const imageUrl = pdfUrl.replace('.pdf', '.png');
+    
+    // Option 2: Use a PDF to image conversion API (requires setup)
+    // const imageUrl = `https://api.pdf2image.com/convert?url=${encodeURIComponent(pdfUrl)}&format=png&page=1`;
+    
+    // Option 3: Use Google Docs Viewer (temporary solution)
+    // const imageUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`;
+    
+    // Option 4: Use a cloud conversion service like CloudConvert
+    // const imageUrl = `https://api.cloudconvert.com/v2/convert?input=${encodeURIComponent(pdfUrl)}&outputformat=png`;
+    
+    return imageUrl;
+  };
+
+  // Build a preview URL suitable for WebView (use Google Drive viewer as a universal fallback)
+  const getPdfPreviewUrl = (pdfUrl: string): string => {
+    // Some CDNs require embedding via Google Docs Viewer for inline preview in WebView
+    return `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(pdfUrl)}`;
   };
 
   const handleDeleteNotice = async (noticeId: string, noticeTitle: string) => {
@@ -329,8 +354,8 @@ const FacultyNotice = () => {
                  {notice.content}
                </Text>
                
-               {/* AI Summary Section */}
-               {notice.summary && (
+               {/* AI Summary Section - Hidden but data preserved for search */}
+               {/* {notice.summary && (
                  <View style={[styles.summaryContainer, { backgroundColor: theme.accentTertiary }]}>
                    <View style={styles.summaryHeader}>
                      <Icon name="magic" size={16} color={theme.accentSecondary} />
@@ -342,29 +367,31 @@ const FacultyNotice = () => {
                      {notice.summary}
                    </Text>
                  </View>
-               )}
+               )} */}
                
-               {/* PDF Notice Section - Moved below AI Summary */}
-               {notice.pdf_url && (
-                 <TouchableOpacity 
-                   style={styles.pdfContainer}
-                   onPress={() => handlePDFPress(notice.pdf_url!)}
-                   activeOpacity={0.9}
-                 >
-                   <View style={styles.pdfCard}>
-                     <Icon name="file-pdf-o" size={32} color={theme.accentSecondary} />
-                     <View style={styles.pdfInfo}>
-                       <Text style={[styles.pdfText, { color: theme.textPrimary }]}>
-                         View PDF Notice
-                       </Text>
-                       <Text style={[styles.pdfSubtext, { color: theme.textTertiary }]}>
-                         Tap to open in browser
-                       </Text>
-                     </View>
-                     <Icon name="external-link" size={16} color={theme.textSecondary} />
-                   </View>
-                 </TouchableOpacity>
-               )}
+                {/* PDF Notice Section - Inline WebView Preview */}
+                {notice.pdf_url && (
+                  <View style={styles.pdfPreviewContainer}>
+                    <Text style={[styles.pdfImageTitle, { color: theme.textPrimary }]}>Notice Preview</Text>
+                    <View style={styles.pdfPreview}>
+                      <WebView
+                        source={{ uri: getPdfPreviewUrl(notice.pdf_url!) }}
+                        style={{ flex: 1 }}
+                        javaScriptEnabled
+                        domStorageEnabled
+                        startInLoadingState
+                      />
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.openPdfButton, { backgroundColor: theme.accentSecondary }]}
+                      onPress={() => handlePDFPress(notice.pdf_url!)}
+                      activeOpacity={0.9}
+                    >
+                      <Icon name="external-link" size={14} color="#fff" />
+                      <Text style={styles.openPdfText}>Open PDF</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               
                                                            <View style={styles.noticeFooter}>
                   <View style={styles.footerLeft}>
@@ -733,6 +760,67 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '400',
     lineHeight: 20,
+  },
+  // PDF Image Display Styles
+  pdfPreviewContainer: {
+    marginVertical: 12,
+  },
+  pdfPreview: {
+    height: 260,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(0,0,0,0.05)'
+  },
+  openPdfButton: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  openPdfText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  pdfImageContainer: {
+    marginVertical: 12,
+  },
+  pdfImageTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  pdfImageWrapper: {
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  pdfImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+  },
+  pdfImageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0,
+  },
+  pdfImageOverlayText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 4,
   },
 });
 

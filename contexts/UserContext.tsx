@@ -84,11 +84,22 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       if (error) {
         console.error('Error signing out:', error);
       }
+      // Clear cached profile for this user
+      try {
+        if (userEmail) {
+          await AsyncStorage.removeItem(`profile:${userEmail}`);
+        }
+      } catch {}
       // Clear local state
       await setUserEmail(null);
     } catch (error) {
       console.error('Error during logout:', error);
       // Still clear local state even if Supabase logout fails
+      try {
+        if (userEmail) {
+          await AsyncStorage.removeItem(`profile:${userEmail}`);
+        }
+      } catch {}
       await setUserEmail(null);
     }
   };
