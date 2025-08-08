@@ -16,16 +16,30 @@ export interface FacultyNotice {
 // Fetch all faculty notices
 export const fetchFacultyNotices = async (): Promise<FacultyNotice[]> => {
   try {
+    console.log('🔍 Fetching faculty notices...');
+    
     const { data, error } = await supabase
       .from('faculty_notices')
       .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching notices:', error);
+      console.error('❌ Error fetching notices:', error);
+      console.error('❌ Error details:', error);
+      
+      // Check if it's an RLS error
+      if (error.message.includes('row level security') || error.message.includes('RLS')) {
+        console.error('🔒 RLS Policy issue detected for faculty_notices table');
+      }
+      
       throw error;
     }
 
+    console.log(`✅ Found ${data?.length || 0} faculty notices`);
+    if (data && data.length > 0) {
+      console.log('📊 Sample notice data:', data[0]);
+    }
+    
     return data || [];
   } catch (error) {
     console.error('Error in fetchFacultyNotices:', error);

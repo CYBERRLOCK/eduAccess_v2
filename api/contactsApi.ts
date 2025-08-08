@@ -39,7 +39,14 @@ export const fetchContacts = async (): Promise<Contact[]> => {
           .select('*');
 
         if (error) {
-          console.log(`Table ${tableName} error:`, error.message);
+          console.error(`❌ Table ${tableName} error:`, error.message);
+          console.error(`❌ Error details:`, error);
+          
+          // Check if it's an RLS error
+          if (error.message.includes('row level security') || error.message.includes('RLS')) {
+            console.error(`🔒 RLS Policy issue detected for table ${tableName}`);
+          }
+          
           continue; // Skip this table and continue to next
         }
 
@@ -59,10 +66,10 @@ export const fetchContacts = async (): Promise<Contact[]> => {
           allContacts.push(...tableContacts);
           console.log(`Found ${tableContacts.length} contacts in ${tableName}`);
         }
-      } catch (tableError) {
-        console.log(`Error fetching from table ${tableName}:`, tableError);
-        continue; // Continue to next table
-      }
+              } catch (tableError) {
+          console.error(`❌ Exception fetching from table ${tableName}:`, tableError);
+          continue; // Continue to next table
+        }
     }
 
     console.log('Total contacts fetched:', allContacts.length);

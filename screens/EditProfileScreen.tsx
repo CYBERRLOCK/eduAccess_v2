@@ -76,18 +76,38 @@ const EditProfileScreen: React.FC = () => {
       return;
     }
 
+    // Basic validation
+    if (!formData.employee_id.trim()) {
+      Alert.alert('Validation Error', 'Please enter your Employee ID.');
+      return;
+    }
+
+    if (!formData.office_location.trim()) {
+      Alert.alert('Validation Error', 'Please enter your Office Location.');
+      return;
+    }
+
+    if (!formData.joining_date.trim()) {
+      Alert.alert('Validation Error', 'Please enter your Joining Date.');
+      return;
+    }
+
     setIsSaving(true);
     try {
+      console.log('💾 Saving profile updates...');
+      console.log('📝 Form data:', formData);
+      
       const success = await updateUserProfile(userEmail, {
-        employee_id: formData.employee_id,
-        office_location: formData.office_location,
-        joining_date: formData.joining_date,
+        employee_id: formData.employee_id.trim(),
+        office_location: formData.office_location.trim(),
+        joining_date: formData.joining_date.trim(),
       });
 
       if (success) {
+        console.log('✅ Profile updated successfully');
         Alert.alert(
           'Success',
-          'Profile updated successfully!',
+          'Profile updated successfully! Your information has been saved to the database.',
           [
             {
               text: 'OK',
@@ -96,10 +116,11 @@ const EditProfileScreen: React.FC = () => {
           ]
         );
       } else {
-        Alert.alert('Error', 'Failed to update profile. Please try again.');
+        console.error('❌ Failed to update profile');
+        Alert.alert('Error', 'Failed to update profile. Please check your connection and try again.');
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('❌ Error updating profile:', error);
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
       setIsSaving(false);
@@ -170,28 +191,47 @@ const EditProfileScreen: React.FC = () => {
           <Text style={[styles.userInfoText, { color: theme.textSecondary }]}>
             Department: {userProfile?.department || 'Not Available'}
           </Text>
+          {userProfile?.employee_id && (
+            <Text style={[styles.userInfoText, { color: theme.textSecondary }]}>
+              Employee ID: {userProfile.employee_id}
+            </Text>
+          )}
+          {userProfile?.office_location && (
+            <Text style={[styles.userInfoText, { color: theme.textSecondary }]}>
+              Office Location: {userProfile.office_location}
+            </Text>
+          )}
+          {userProfile?.joining_date && (
+            <Text style={[styles.userInfoText, { color: theme.textSecondary }]}>
+              Joining Date: {userProfile.joining_date}
+            </Text>
+          )}
         </View>
 
         {/* Employee ID Input */}
         <View style={styles.inputGroup}>
-          <Text style={[styles.label, { color: theme.textPrimary }]}>Employee ID</Text>
+          <Text style={[styles.label, { color: theme.textPrimary }]}>Employee ID *</Text>
           <TextInput
             style={[styles.textInput, { 
               backgroundColor: theme.surfaceColor, 
               color: theme.textPrimary,
               borderColor: theme.borderLight 
             }]}
-            placeholder="Enter your employee ID"
+            placeholder="Enter your employee ID (e.g., EMP001, F2023001)"
             placeholderTextColor={theme.textTertiary}
             value={formData.employee_id}
             onChangeText={(text) => setFormData({ ...formData, employee_id: text })}
             autoCapitalize="characters"
+            maxLength={20}
           />
+          <Text style={[styles.hintText, { color: theme.textTertiary }]}>
+            This will be saved to your faculty record in the database
+          </Text>
         </View>
 
         {/* Office Location Input */}
         <View style={styles.inputGroup}>
-          <Text style={[styles.label, { color: theme.textPrimary }]}>Office Location</Text>
+          <Text style={[styles.label, { color: theme.textPrimary }]}>Office Location *</Text>
           <TextInput
             style={[styles.textInput, { 
               backgroundColor: theme.surfaceColor, 
@@ -203,12 +243,16 @@ const EditProfileScreen: React.FC = () => {
             value={formData.office_location}
             onChangeText={(text) => setFormData({ ...formData, office_location: text })}
             autoCapitalize="words"
+            maxLength={100}
           />
+          <Text style={[styles.hintText, { color: theme.textTertiary }]}>
+            This will be saved to your faculty record in the database
+          </Text>
         </View>
 
         {/* Joining Date Input */}
         <View style={styles.inputGroup}>
-          <Text style={[styles.label, { color: theme.textPrimary }]}>Joining Date</Text>
+          <Text style={[styles.label, { color: theme.textPrimary }]}>Joining Date *</Text>
           <TextInput
             style={[styles.textInput, { 
               backgroundColor: theme.surfaceColor, 
@@ -220,7 +264,11 @@ const EditProfileScreen: React.FC = () => {
             value={formData.joining_date}
             onChangeText={(text) => setFormData({ ...formData, joining_date: text })}
             autoCapitalize="words"
+            maxLength={50}
           />
+          <Text style={[styles.hintText, { color: theme.textTertiary }]}>
+            This will be saved to your faculty record in the database
+          </Text>
         </View>
 
         {/* Action Buttons */}
@@ -354,6 +402,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     borderWidth: 1,
+  },
+  hintText: {
+    fontSize: 12,
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   buttonContainer: {
     flexDirection: 'row',
